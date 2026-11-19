@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "skills": {
+    "project-auditor-fixes": {
+      "source": "Unity-Technologies/skills",
+      "commit": "5841a34846f3e2b908c37aca1fca2eb15118a440",
+      "sourceType": "github",
+      "skillPath": "skills/project-auditor-fixes/SKILL.md",
+      "computedHash": "877c26dc6fe0a7706d070aa8b61292f10496d2f8fd6305c098b712cd492d4c9b",
+      "installMode": "copy"
+    },
+    "unity-animation": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "commit": "c6ca6c41c839b68319ffc08430b99ab768debc32",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-animation/SKILL.md",
+      "computedHash": "a386c3152eb91c9bad6f3ea2f8956511a15c9851a08ad63c49efd54ec1c9ed3b",
+      "installMode": "copy"
+    },
+    "unity-input-system": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "commit": "c6ca6c41c839b68319ffc08430b99ab768debc32",
+      "sourceType": "github",
+      "skillPath": "skills/unity/unity-input-system/SKILL.md",
+      "computedHash": "194902ff61daae1f5d5ba5d1aa6bc0c51daf84111434f9f9652167a154944650",
+      "installMode": "copy"
+    },
+    "unity-pipeline": {
+      "source": "Unity-Technologies/skills",
+      "commit": "5841a34846f3e2b908c37aca1fca2eb15118a440",
+      "sourceType": "github",
+      "skillPath": "skills/unity-pipeline/SKILL.md",
+      "computedHash": "2bd37e336acab3ab23bd6717999c2deb4727c6387f6a39b28b41ab6dff733022",
+      "installMode": "copy"
+    },
+    "unity-testing": {
+      "source": "Nice-Wolf-Studio/unity-claude-skills",
+      "commit": "a149d3e995420432f52b0899092daa4b069f441f",
+      "sourceType": "github",
+      "skillPath": "skills/unity-testing/SKILL.md",
+      "computedHash": "53849ed8b089bf39f1ac0d6019ac40b9154fdfc902bd6fed580df96b4a24a61d",
+      "installMode": "copy"
+    }
+  }
+}

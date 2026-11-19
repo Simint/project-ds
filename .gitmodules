@@ -1,0 +1,9 @@
+[submodule "Assets/_Project/Art"]
+	path = Assets/_Project/Art
+	url = https://github.com/Simint/project-ds-art.git
+[submodule "Assets/_Project/Audio"]
+	path = Assets/_Project/Audio
+	url = https://github.com/Simint/project-ds-audio.git
+[submodule "docs/design"]
+	path = docs/design
+	url = https://github.com/Simint/project-ds-design.git

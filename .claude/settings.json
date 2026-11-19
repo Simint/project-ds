@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 tools/harness/validate.py:*)",
+      "Bash(python tools/harness/validate.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "ask": [
+      "Edit(/ProjectSettings/**)",
+      "Edit(/Packages/manifest.json)",
+      "Edit(/Assets/**/*.unity)",
+      "Edit(/Assets/**/*.prefab)",
+      "Edit(/Assets/**/*.meta)",
+      "Edit(/Assets/_Project/Editor/Harness/**)",
+      "Edit(/harness.config.json)"
+    ],
+    "deny": [
+      "Read(/Library/**)",
+      "Read(/Temp/**)",
+      "Read(/Logs/**)",
+      "Read(/obj/**)",
+      "Edit(/Library/**)",
+      "Edit(/Temp/**)",
+      "Edit(/Logs/**)",
+      "Edit(/obj/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/post_edit.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

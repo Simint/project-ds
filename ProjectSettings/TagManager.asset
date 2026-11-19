@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - Player
+  - Enemy
+  - Ground
+  - OneWayPlatform
+  - Structure
+  - Interactable
+  - Pickup
+  - PlayerAttack
+  - EnemyAttack
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Sky
+    uniqueID: 517565259
+    locked: 0
+  - name: FarBackground
+    uniqueID: 53041138
+    locked: 0
+  - name: Background
+    uniqueID: 11592356
+    locked: 0
+  - name: BackWall
+    uniqueID: 102611474
+    locked: 0
+  - name: Props
+    uniqueID: 1768787612
+    locked: 0
+  - name: Terrain
+    uniqueID: 2141987001
+    locked: 0
+  - name: Entities
+    uniqueID: 1348562737
+    locked: 0
+  - name: Foreground
+    uniqueID: 48116815
+    locked: 0
+  - name: Effects
+    uniqueID: 940124458
+    locked: 0
+  - name: UI
+    uniqueID: 1101142964
+    locked: 0
+  m_RenderingLayers:
+  - Default
+  m_MigratedRenderPipelines: []

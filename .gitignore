@@ -1,0 +1,58 @@
+# Unity 생성 폴더
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# 에셋 스토어 도구
+/[Aa]ssets/AssetStoreTools*
+
+# IDE 생성 파일
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity 크래시·빌드 부산물
+sysinfo.txt
+*.apk
+*.aab
+*.unitypackage
+crashlytics-build.properties
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Plastic SCM 워크스페이스 메타데이터
+.plastic/
+
+# Python 캐시 (하네스 검증기)
+__pycache__/
+*.pyc
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
+
+# 에이전트 임시 스크립트·스크린샷 (unity-pipeline)
+/AgentScripts/
+/Screenshots/
+
+# OS
+.DS_Store
+Thumbs.db

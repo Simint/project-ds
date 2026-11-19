@@ -1,0 +1,44 @@
+{
+  "_comment": "하네스의 단일 기준값. Python 검증기와 Unity 에디터 스크립트가 모두 이 파일을 읽습니다. 값을 바꾸면 docs/RENDERING_RULES.md도 같이 고치세요.",
+
+  "view": "SideScroller",
+
+  "tilePixelSize": 16,
+  "pixelsPerUnit": 16,
+  "referenceResolution": [480, 270],
+
+  "artRoot": "Assets/_Project/Art",
+  "bottomPivotFolders": [
+    "Assets/_Project/Art/Characters",
+    "Assets/_Project/Art/Props",
+    "Assets/_Project/Art/Structures"
+  ],
+
+  "sortingLayers": [
+    "Default",
+    "Sky",
+    "FarBackground",
+    "Background",
+    "BackWall",
+    "Props",
+    "Terrain",
+    "Entities",
+    "Foreground",
+    "Effects",
+    "UI"
+  ],
+
+  "physicsLayers": [
+    "Player",
+    "Enemy",
+    "Ground",
+    "OneWayPlatform",
+    "Structure",
+    "Interactable",
+    "Pickup",
+    "PlayerAttack",
+    "EnemyAttack"
+  ],
+
+  "scanRoots": ["Assets/_Project"]
+}
