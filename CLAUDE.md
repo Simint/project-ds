@@ -55,7 +55,7 @@
 
 ## 검증
 
-에이전트는 Unity 에디터를 직접 실행할 수 없다. 대신 아래로 확인한다.
+에이전트는 `unity-pipeline` 스킬(`unity command ...`)로 Unity 에디터에 직접 연결해 컴파일·Console·Play Mode·씬 작업을 확인할 수 있다. 정적 규칙 검사는 별도로 Python 하네스를 쓴다.
 
 ```bash
 python tools/harness/validate.py            # 전체 검사 (임포트, 레이어, 프리팹·씬, 중복 ID)
@@ -64,7 +64,10 @@ python tools/harness/validate.py path/to/File.cs   # 파일 하나
 ```
 
 - `.cs`, `.prefab`, `.unity`, `.meta` 파일을 고치면 `post_edit` 훅이 자동으로 검사한다. **훅이 오류를 보고하면 다음 작업으로 넘어가기 전에 고친다.** 의도된 예외라면 해당 줄 끝에 `// harness-ignore HX00N 이유`를 단다.
-- 컴파일 확인은 사용자가 Unity에서 해야 한다. 작업이 끝나면 "Unity로 돌아가서 Console에 오류가 없는지 확인해 주세요"라고 알리고, 씬에서 직접 해야 하는 설정(컴포넌트 추가, 레이어 지정, 프리팹 연결)은 **번호 매긴 체크리스트**로 남긴다.
+- 컴파일·Console 확인은 에이전트가 직접 한다: `unity command script recompile` → `script recompile_status`로 완료 대기 → `console status`/`console get --level error`로 오류 0건을 확인한다. 오류가 있으면 다음 작업으로 넘어가기 전에 고친다.
+- 런타임 동작(맵 이동, 상호작용 등)을 바꿨으면 Play Mode(`editor.playmode start`)에 들어가 실제로 확인한다. 테스트가 끝나면 Play Mode를 종료한다.
+- 씬·프리팹 생성/배치는 `unity-pipeline`의 `script run`(Editor 전용 스크립트를 `Assets/_Project/Editor/`에 두고 메뉴 항목으로 실행)으로 만든다. 에셋을 새로 만든 직후 **같은 호출 안에서** `EditorSceneManager.NewScene(..., Single)`을 부르면 방금 만든 ScriptableObject 참조가 다음 `AssetDatabase.LoadAssetAtPath`에서 끊기는 경우가 있었다 — `NewSceneMode.Additive` + 끝에 명시적 `CloseScene`을 쓰고, 같은 경로의 씬이 이미 열려 있으면(`SaveScene`이 "Overwriting the same path" 오류로 조용히 실패) 먼저 닫는다. 작업이 끝나면 씬 작성용 임시 Editor 스크립트는 지운다.
+- 사람만 할 수 있는 작업(Unity 창 포커스가 필요한 모달 승인 등)이 남으면 **번호 매긴 체크리스트**로 알린다.
 
 ## 코드 스타일 요약
 

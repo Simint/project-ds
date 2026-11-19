@@ -176,7 +176,8 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 ### 4.1 시간·계절·날씨 (`World/`)
 
 - `WorldClock` (`IWorldClock` 구현): 게임 시간의 유일한 출처. 다른 시스템은 `IWorldClock`으로 받는다 (테스트에서 가짜 시계로 교체). 내부 값은 `long totalMinutes`이다. 현실 1초 = 게임 1.2분 (하루 1440분 = 현실 20분, `WorldSettings`에서 조절). 이벤트는 `MinutePassed`, `HourPassed`, `DayChanged`이다. `Advance(minutes)`는 시간을 건너뛴다 (맵 선택 이동, 잠자기).
-  - `Advance`는 분마다 이벤트를 쏘지 않는다. 받는 쪽은 `Advanced(long minutes)`를 받아 한 번에 계산한다.
+  - `Advance`는 분마다 이벤트를 쏘지 않는다. 받는 쪽은 `Advanced(long minutes)`를 받아 한 번에 계산한다. 건너뛰는 동안 날짜가 바뀌었으면 `DayChanged`를 한 번만 보낸다 (며칠을 건너뛰어도 한 번). 받는 쪽은 현재 날짜를 다시 계산한다.
+  - 하루는 항상 게임 내 1440분(24시간)이다. 설정으로 바꾸는 것은 하루가 현실로 몇 초인지뿐이다.
 - `SeasonSystem`: `totalMinutes`와 `WorldSettings.seasonLengthDays`로 현재 계절(봄·여름·가을·겨울)을 계산한다.
 - `WeatherSystem`: 계절별 가중치로 `WeatherDefinition`을 고르고 일정 시간마다 바꾼다.
   - `WeatherDefinition`: id, 온도 보정, 시야 보정, 소음 반경 배율, 낙진 피폭량/분, 비·눈 여부, FX 프리팹.
