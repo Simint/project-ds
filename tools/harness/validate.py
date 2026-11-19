@@ -31,6 +31,11 @@ def check_path(p: Path, cfg):
 
 
 def main(argv=None) -> int:
+    for stream in (sys.stdout, sys.stderr):  # Windows 콘솔(cp949)에서 한글이 깨지지 않게
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser(description="Unity side-scroller harness validator")
     ap.add_argument("paths", nargs="*", help="특정 파일만 검사 (생략하면 전체)")
     ap.add_argument("--only", choices=GROUPS, action="append", help="검사 그룹 선택 (여러 번 가능)")

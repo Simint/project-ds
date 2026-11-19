@@ -22,6 +22,13 @@
 - 공개 저장소에 넣는 파일(코드, `docs/ARCHITECTURE.md`, CLAUDE.md, 스킬 등)에는 기획의 세부 내용(세계관, 스토리, 수치 밸런스)을 적지 않는다. 필요하면 `docs/design/`을 가리키기만 한다.
 - 받는 법: `git clone --recurse-submodules`, 이미 받았다면 `git submodule update --init`
 
+### 다른 에이전트(Codex)와 함께 쓰기
+
+- `AGENTS.md`는 Codex가 이 파일의 규칙을 따르게 하는 연결 문서다. 규칙의 원본은 이 파일이다. 규칙을 바꾸면 `AGENTS.md`의 Codex 전용 부분(권한, 경로별 규칙 표)도 맞는지 확인한다.
+- `.claude/skills/`를 고치면 `python tools/harness/sync_agent_skills.py`로 `.agents/skills/`(Codex용 사본)를 갱신한다. `.agents/skills/`는 직접 고치지 않는다.
+- `.claude/hooks/post_edit.py`는 Claude와 Codex(`.codex/hooks.json`)가 함께 쓴다. 고칠 때 두 입력 형식(`file_path`, `apply_patch` 패치 텍스트)을 모두 유지한다.
+- `.claude/agents/unity-reviewer.md`를 고치면 `.codex/agents/unity-reviewer.toml`도 같이 고친다.
+
 시스템 구조, 폴더 위치, 데이터 흐름은 `docs/ARCHITECTURE.md`에 있다. **새 스크립트나 새 시스템을 만들기 전에 반드시 읽는다.**
 수치 기준(PPU, 레이어 목록 등)의 원본은 `harness.config.json`이다.
 
