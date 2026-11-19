@@ -14,7 +14,7 @@ description: 허기, 갈증, 체온, 스태미나, 정신력 같은 생존 스�
 - `uiIcon`, `uiColor`
 
 ## 2. 동작 원칙
-- 값 갱신은 `SurvivalStats`가 `WorldClock.OnMinute`에 맞춰 한 곳에서 한다. 스탯마다 `Update`를 돌리지 않는다.
+- 값 갱신은 `SurvivalStats`가 `WorldClock.MinutePassed`에 맞춰 한 곳에서 한다. 스탯마다 `Update`를 돌리지 않는다.
 - 외부 요인(추운 지역, 모닥불 근처, 달리기)은 `IStatModifier`로 등록·해제한다. 예: `CampfireWarmth`가 범위 트리거에 들어오면 체온 모디파이어 등록, 나가면 해제.
 - 효과(이동속도 감소 등)는 스탯이 직접 다른 컴포넌트를 건드리지 않는다. `SurvivalStats.OnThresholdChanged` 이벤트를 `PlayerController` 등이 구독한다.
 - 음식 회복은 `ItemDefinition.consumable`의 스탯 id로 연결한다 (`add-item` 참고).

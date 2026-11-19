@@ -48,7 +48,7 @@ Assets/_Project/
 │   └── Interiors/      실내·층 맵 (예: Residential_House01_F1.unity)
 ├── Settings/           Controls.inputactions 등
 ├── Scripts/
-│   ├── Core/           GameLayers, PersistentId, 서비스 접근, 공용 유틸
+│   ├── Core/           GameLayers, PersistentId, GameServices(서비스 접근), GameLog, 공용 유틸
 │   ├── Player/         이동, 입력, 상태 머신, 손 모드, 후각, 상호작용
 │   ├── Maps/           MapDefinition, MapLoader, 맵 이동, 맵 상태, 맵 해금
 │   ├── World/          WorldClock, 계절, 날씨, 낮밤, 패럴랙스, 전경 페이드, 환경 구역
@@ -96,7 +96,7 @@ Assets/_Project/
 
 ```
 Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산 로드)
-├─ GameRoot                               ├─ MapRoot (MapDefinition 참조, 카메라 경계)
+├─ GameServices                           ├─ MapRoot (MapDefinition 참조, 카메라 경계)
 │  ├─ WorldClock                          ├─ Grid / Tilemaps
 │  ├─ SeasonSystem / WeatherSystem        ├─ SpawnPoint × N
 │  ├─ MapLoader / MapStateRegistry        ├─ MapTransitionDoor × N
@@ -111,7 +111,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 
 - `Boot`는 게임 시작부터 끝까지 남는다. 플레이어·카메라·UI·서비스는 여기 있고, 맵이 바뀌어도 파괴되지 않는다. `DontDestroyOnLoad`를 쓰지 않고, 씬 하나에 모아 둔다.
 - 맵 씬은 `MapLoader`가 `LoadSceneAsync(..., Additive)`로 하나만 로드하고, 이전 맵은 언로드한다.
-- 맵 씬 안의 오브젝트는 `Boot`의 서비스를 `GameRoot`(서비스 접근 지점)로 찾는다. `Find*`나 `Camera.main`은 쓰지 않는다.
+- 맵 씬 안의 오브젝트는 `Boot`의 서비스를 `GameServices`(서비스 접근 지점, Core)로 찾는다. 매니저마다 싱글톤을 만들지 않는다 (`.claude/rules/csharp.md` "의존성과 전역 접근"). `Find*`나 `Camera.main`은 쓰지 않는다.
 - 카메라 경계: `MapRoot`의 `PolygonCollider2D`(트리거, 콜라이더 레이어 없음)를 `MapLoader`가 `CinemachineConfiner2D`에 넣는다.
 - 빛: Global Light 2D는 `Boot`에 하나 있다. 실내 맵은 `MapDefinition.isIndoor`로 낮밤 반영을 끄고 고정 실내 밝기를 쓴다.
 
@@ -175,8 +175,8 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 
 ### 4.1 시간·계절·날씨 (`World/`)
 
-- `WorldClock`: 게임 시간의 유일한 출처. 내부 값은 `long totalMinutes`이다. 현실 1초 = 게임 1.2분 (하루 1440분 = 현실 20분, `WorldSettings`에서 조절). 이벤트는 `OnMinute`, `OnHour`, `OnDayChanged`이다. `Advance(minutes)`는 시간을 건너뛴다 (맵 선택 이동, 잠자기).
-  - `Advance`는 분마다 이벤트를 쏘지 않는다. 받는 쪽은 `OnAdvanced(long minutes)`를 받아 한 번에 계산한다.
+- `WorldClock` (`IWorldClock` 구현): 게임 시간의 유일한 출처. 다른 시스템은 `IWorldClock`으로 받는다 (테스트에서 가짜 시계로 교체). 내부 값은 `long totalMinutes`이다. 현실 1초 = 게임 1.2분 (하루 1440분 = 현실 20분, `WorldSettings`에서 조절). 이벤트는 `MinutePassed`, `HourPassed`, `DayChanged`이다. `Advance(minutes)`는 시간을 건너뛴다 (맵 선택 이동, 잠자기).
+  - `Advance`는 분마다 이벤트를 쏘지 않는다. 받는 쪽은 `Advanced(long minutes)`를 받아 한 번에 계산한다.
 - `SeasonSystem`: `totalMinutes`와 `WorldSettings.seasonLengthDays`로 현재 계절(봄·여름·가을·겨울)을 계산한다.
 - `WeatherSystem`: 계절별 가중치로 `WeatherDefinition`을 고르고 일정 시간마다 바꾼다.
   - `WeatherDefinition`: id, 온도 보정, 시야 보정, 소음 반경 배율, 낙진 피폭량/분, 비·눈 여부, FX 프리팹.
@@ -193,7 +193,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
   - 무게 보정: `InventoryModel.WeightRatio` → 속도·점프 배율 곡선(`AnimationCurve`)
   - 부상 보정: 골절이면 속도·점프 배율을 낮춘다.
 - **`PlayerHands`(손 모드):** `HandMode { Human, Beast }`
-  - 전환은 `transitionSeconds`(기본 0.5) 동안 걸린다. 그동안 공격과 상호작용을 막는다. 이벤트는 `OnHandModeChanged`이다.
+  - 전환은 `transitionSeconds`(기본 0.5) 동안 걸린다. 그동안 공격과 상호작용을 막는다. 이벤트는 `HandModeChanged`이다.
   - `Beast` 동안: 허기 감소 배율을 생존 스탯 모디파이어로 등록한다. 손에 든 아이템 사용을 막는다. 장갑 슬롯은 해제한다.
   - 행동 허용 검사는 `HandRequirement { Any, Human, Beast }` 하나로 통일한다. 아이템(`ItemDefinition.requiredHand`), 레시피, 상호작용(`IInteractable.RequiredHand`)이 이 값을 가진다.
 - **`ScentSense`(후각):** 쿨타임과 허기 비용이 있다. `ScentSystem`에 등록된 `ScentSource`(음식, 아이템, 적, 방사능 구역, DigSpot)를 반경 안에서 찾아 FX 풀로 흔적을 보여 준다.
@@ -203,7 +203,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 ### 4.3 생존 (`Survival/`)
 
 - `SurvivalStatDefinition`: id, 최대값, 분당 감소량, 0일 때 효과. 스탯은 HP, 허기, 갈증, 체온, 스태미나, 방사능 피폭이다.
-- `SurvivalStats`: 여러 `SurvivalStat`을 묶은 모델. `WorldClock.OnMinute`마다 갱신하고, `OnAdvanced(minutes)`에서는 한 번에 계산한다.
+- `SurvivalStats`: 여러 `SurvivalStat`을 묶은 모델. `WorldClock.MinutePassed`마다 갱신하고, `Advanced(minutes)`에서는 한 번에 계산한다.
   - 모디파이어(배율·가산)는 출처별로 등록·해제한다: 손 모드, 날씨, 구역, 상태 이상, 난이도, 장비. 저장하지 않는다 (불러온 뒤 환경에서 다시 등록됨).
 - 방사능 피폭: 분마다 들어오는 양 = 맵 기본 오염도 + 구역 + 낙진(실외일 때) + 변이 좀비 피격. 여기서 방호 장비 등급만큼 줄인다. 들어오는 양이 0이고 오염 맵이 아니면 서서히 회복한다. 피폭 단계는 `StatusEffect`로 표현한다.
 - `StatusEffectDefinition`: id, 지속(시간 또는 치료할 때까지), 스탯 모디파이어, 이동 보정, 치료 아이템 태그. 출혈, 골절, 식중독·질병, 피폭 단계 1~4가 여기에 해당한다.
@@ -314,7 +314,7 @@ WorldSaveData (version 2)
 
 ## 6. 구현 순서 (MVP: 은신처 + 주택가)
 
-1. `Boot` 씬, `GameRoot`, `WorldClock`, `MapDefinition`, `MapLoader`, `SpawnPoint`, `MapTransitionDoor` → 빈 은신처와 빈 주택가를 오가기
+1. `Boot` 씬, `GameServices`, `GameLog`, `WorldClock`(`IWorldClock`), `MapDefinition`, `MapLoader`, `SpawnPoint`, `MapTransitionDoor` → 빈 은신처와 빈 주택가를 오가기
 2. 플레이어 이동·점프(`tune-movement`), `PlayerInputReader`, `PlayerHands`(손 전환과 네 발 달리기)
 3. 아이템·인벤토리(슬롯+무게), 채집물(`add-harvestable`), `MapStateRegistry`와 저장
 4. 생존 스탯(허기·갈증·체온·스태미나·HP), 상태 이상(출혈·골절·질병), 음식 부패

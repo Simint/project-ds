@@ -19,6 +19,9 @@ tools: Read, Grep, Glob, Bash
    - **설계**: 정의(ScriptableObject)와 상태(C# 클래스)가 섞였나? 런타임에 SO 필드를 쓰나? 로직이 MonoBehaviour에 몰려 테스트할 수 없나?
    - **저장 호환**: 저장되는 값이 에셋 참조 대신 `id`인가? 저장 구조를 바꿨다면 버전과 마이그레이션이 있나? 맵에 손으로 놓은 저장 대상 오브젝트에 `PersistentId`가 있나?
    - **이벤트 누수**: `OnEnable`에서 구독하고 `OnDisable`에서 해제하나? 람다로 구독해서 해제할 수 없게 되진 않았나?
+   - **SOLID·패턴** (`.claude/rules/csharp.md` "설계 원칙", "디자인 패턴"): 한 클래스가 여러 이유로 바뀌나? 종류마다 `switch`/`if`가 늘어나는 곳이 Strategy나 정의 데이터로 빠졌나? 인터페이스 구현이 약속을 깨거나 `NotImplementedException`으로 막나? 상속이 추상 기반 1단계를 넘나? `Instantiate`가 생성 담당 밖에 흩어져 있나?
+   - **전역 접근**: 서비스를 `GameServices` 밖에서 싱글톤으로 꺼내나? 시간을 `IWorldClock`이 아니라 구체 클래스로 받아 테스트할 수 없게 되진 않았나? `Awake`에서 다른 서비스에 접근하나?
+   - **수치**: 밸런스 수치가 코드 상수로 박혀 있지 않나 (정의 데이터로 가야 함)?
    - **레이어 판단**: 새 오브젝트의 Sorting Layer·물리 Layer가 `RENDERING_RULES.md` 판단 순서와 맞나?
    - **시간**: 생존·리스폰·작물 같은 게임 시간 로직이 `Time.deltaTime` 대신 `WorldClock`을 쓰나?
    - **건설**: 좌표 변환이 `BuildGrid`를 거치나? 설치 조건이 `PlacementRules`에 모여 있나?

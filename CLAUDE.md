@@ -72,3 +72,5 @@ python tools/harness/validate.py path/to/File.cs   # 파일 하나
 - 네임스페이스 `Game.<폴더명>` (예: `Game.Survival`).
 - 인스펙터 노출은 `[SerializeField] private`. `public` 필드 금지 (프로퍼티로 노출).
 - 한 파일에 한 MonoBehaviour. 파일 이름 = 클래스 이름.
+- 설계: SOLID(Unity판), 상황별 디자인 패턴, 조합 우선(상속은 추상 기반 1단계까지), 이벤트는 C# `event`, 비동기는 `Awaitable`, 로그는 `GameLog`.
+- 전역 접근은 `GameServices` 하나만. 매니저마다 싱글톤 금지. 시간은 `IWorldClock`으로 받는다.

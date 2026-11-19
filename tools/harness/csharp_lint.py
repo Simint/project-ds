@@ -132,6 +132,25 @@ FIND_DEPRECATED = re.compile(r"\bFindObjectsOfType\b|\bFindObjectOfType\b|\bFind
 TRANSFORM_MOVE = re.compile(r"\btransform\s*\.\s*(position\s*[+\-]?=(?!=)|Translate\s*\()")
 DEBUG_LOG = re.compile(r"\bDebug\s*\.\s*Log\w*\s*\(")
 UNITY_OBJECT_CLASS = re.compile(r"class\s+\w+[^{]*:\s*[^{]*\b(MonoBehaviour|ScriptableObject|StateMachineBehaviour)\b")
+# HX010: per-manager singleton (static Instance field/property)
+SINGLETON_INSTANCE = re.compile(r"\bstatic\s+(?!readonly\b)[\w<>\[\],.?]+\s+Instance\b\s*(\{|=|;)")
+# HX011: string-based calls
+STRING_CALL = re.compile(
+    r"\b(SendMessage|SendMessageUpwards|BroadcastMessage)\s*\("
+    r"|\b(Invoke|InvokeRepeating|CancelInvoke|IsInvoking|StartCoroutine|StopCoroutine)\s*\(\s*\""
+)
+# HX012: async void
+ASYNC_VOID = re.compile(r"\basync\s+void\b")
+# HX013: info log (warnings/errors are allowed)
+DEBUG_INFO_LOG = re.compile(r"\bDebug\s*\.\s*Log\s*\(")
+# HX014: static mutable field (not const / readonly / event / method / property)
+STATIC_FIELD = re.compile(
+    r"^\s*(?:(?:public|private|protected|internal)\s+)*static\s+"
+    r"(?!(?:readonly|extern|class|struct|enum|interface|event|delegate|partial|async|implicit|explicit|operator)\b)"
+    r"(?:volatile\s+)?[\w<>\[\],.?\s]+?\s+[A-Za-z_]\w*\s*(=[^;]*)?;\s*$"
+)
+SERVICE_LOCATOR_FILES = ("GameServices.cs",)
+LOGGER_FILES = ("GameLog.cs",)
 PUBLIC_FIELD = re.compile(
     r"^\s*public\s+(?!(?:static|const|readonly|override|abstract|virtual|event|class|struct|enum|interface"
     r"|delegate|partial|sealed|record|async|unsafe|extern|new|implicit|explicit|operator)\b)"
@@ -159,7 +178,10 @@ def lint_source(src: str, rel_path: str) -> List[Finding]:
     findings: List[Finding] = []
     orig_lines = src.splitlines()
     no_comments, code = strip_source(src)
-    is_gamelayers = rel_path.replace("\\", "/").endswith("/GameLayers.cs") or rel_path == "GameLayers.cs"
+    rel_posix = rel_path.replace("\\", "/")
+    file_name = rel_posix.rsplit("/", 1)[-1]
+    is_gamelayers = file_name == "GameLayers.cs"
+    is_editor = "/Editor/" in "/" + rel_posix
     has_rb2d = "Rigidbody2D" in code
     is_unity_obj = bool(UNITY_OBJECT_CLASS.search(code))
 
@@ -213,6 +235,31 @@ def lint_source(src: str, rel_path: str) -> List[Finding]:
             if PUBLIC_FIELD.match(line):
                 add(WARN, "HX004", i,
                     "public 필드. [SerializeField] private + 읽기 전용 프로퍼티로 바꾸세요.", by_line=True)
+
+    # --- design rules (.claude/rules/csharp.md "의존성과 전역 접근" 등)
+    if not is_editor:
+        if file_name not in SERVICE_LOCATOR_FILES:
+            for m in SINGLETON_INSTANCE.finditer(code):
+                add(WARN, "HX010", m.start(),
+                    "매니저 싱글톤(static Instance). 전역 접근은 GameServices에 등록해서 쓰세요.")
+        for m in STRING_CALL.finditer(code):  # 문자열 내용은 지워지고 여는 따옴표는 남아 있음
+            add(ERROR, "HX011", m.start(),
+                "문자열로 메서드 호출 (SendMessage/Invoke(\"...\")/StartCoroutine(\"...\")). 직접 호출·이벤트·StartCoroutine(Method())를 쓰세요.")
+        for m in ASYNC_VOID.finditer(code):
+            add(WARN, "HX012", m.start(),
+                "async void. async Awaitable + destroyCancellationToken을 쓰세요 (UI 핸들러면 harness-ignore HX012).")
+        if file_name not in LOGGER_FILES:
+            for m in DEBUG_INFO_LOG.finditer(code):
+                add(WARN, "HX013", m.start(),
+                    "Debug.Log 직접 사용. GameLog.Info(태그, 메시지)를 쓰세요 (경고·오류는 Debug.LogWarning/LogError 허용).")
+        if file_name not in SERVICE_LOCATOR_FILES:
+            for i, line in enumerate(code.splitlines(), start=1):
+                if "(" in line or "=>" in line or " const " in f" {line} ":
+                    continue
+                if STATIC_FIELD.match(line) and not SINGLETON_INSTANCE.search(line):
+                    add(WARN, "HX014", i,
+                        "정적 가변 필드. 도메인 리로드를 끄면 값이 남습니다. 서비스의 인스턴스 필드나 static readonly/const로 바꾸세요.",
+                        by_line=True)
 
     uniq = {}
     for f in findings:
