@@ -1,5 +1,6 @@
 using System;
 using Game.Maps;
+using Game.UI;
 using Game.World;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ namespace Game.Core
     {
         public static IWorldClock WorldClock { get; private set; }
         public static MapLoader MapLoader { get; private set; }
+        public static TravelMenuUI TravelMenu { get; private set; }
         public static bool IsReady { get; private set; }
 
         /// <summary>모든 서비스 등록이 끝난 뒤 한 번 발행된다. 등록 순서와 무관하게 구독할 수 있다.</summary>
@@ -21,6 +23,7 @@ namespace Game.Core
 
         public static void RegisterWorldClock(IWorldClock clock) => WorldClock = clock;
         public static void RegisterMapLoader(MapLoader loader) => MapLoader = loader;
+        public static void RegisterTravelMenu(TravelMenuUI menu) => TravelMenu = menu;
 
         public static void NotifyReady()
         {
@@ -37,6 +40,7 @@ namespace Game.Core
         {
             WorldClock = null;
             MapLoader = null;
+            TravelMenu = null;
             IsReady = false;
             Ready = null;
         }

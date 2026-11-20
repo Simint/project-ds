@@ -1,4 +1,5 @@
 using Game.Maps;
+using Game.UI;
 using Game.World;
 using UnityEngine;
 
@@ -12,14 +13,17 @@ namespace Game.Core
     {
         [SerializeField] private WorldClock worldClock;
         [SerializeField] private MapLoader mapLoader;
+        [SerializeField] private TravelMenuUI travelMenu;
 
         private void Awake()
         {
             if (worldClock == null) Debug.LogError("[GameBootstrap] worldClock 참조가 비어 있습니다.", this);
             if (mapLoader == null) Debug.LogError("[GameBootstrap] mapLoader 참조가 비어 있습니다.", this);
+            if (travelMenu == null) Debug.LogError("[GameBootstrap] travelMenu 참조가 비어 있습니다.", this);
 
             GameServices.RegisterWorldClock(worldClock);
             GameServices.RegisterMapLoader(mapLoader);
+            GameServices.RegisterTravelMenu(travelMenu);
             GameServices.NotifyReady();
         }
     }

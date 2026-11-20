@@ -145,9 +145,9 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
  10. 자동 저장, 페이드 인, 입력 해제
 ```
 
-- `MapTransitionDoor`(`IInteractable`): `targetMap`(MapDefinition), `targetSpawnPointId`. 문 이동은 `travelMinutes = 0`이다. 인접 지역, 실내, 층 이동이 모두 이 컴포넌트를 쓴다.
+- `MapTransitionDoor`(`IInteractable`): `targetMap`(MapDefinition), `targetSpawnPointId`. 인접 지역, 실내, 층 이동이 모두 이 컴포넌트를 쓴다. 이동 시간은 현재 맵과 목표 맵 중 어느 쪽이 Hub인지로 정해진다: Hub↔Region이면 Region 쪽 `travelMinutesFromHub`를 양방향에 그대로 쓰고, 그 외(같은 지역 내부, 실내, 층 이동)는 `0`이다.
 - `SpawnPoint`: 맵 안에서 고유한 `spawnPointId` 문자열 (`from_hub`, `door_house01`, `stairs_up`).
-- 맵 선택(은신처의 출발 지점 UI)은 해금된 `Region` 목록을 보여 주고 `travelMinutesFromHub`를 쓴다. 돌아올 때도 같은 시간이 든다.
+- 맵 선택(은신처의 출발 지점 UI)은 해금된 `Region` 목록을 보여 주고 `travelMinutesFromHub`를 쓴다. 돌아올 때도 `MapTransitionDoor`가 같은 시간을 쓴다.
 - **해금:** `MapUnlocks`(해금된 map id 집합)에 추가한다. 맵 끝 출구에 처음 도달했을 때(`MapUnlockTrigger`), 또는 지도·쪽지 아이템을 얻었을 때 추가된다.
 
 ### 3.4 맵 상태 (영구 변경 + 리스폰)
@@ -271,7 +271,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 ### 4.8 사망·난이도
 
 - `DifficultyDefinition`(쉬움/보통/어려움): 스탯 감소 배율, 적 피해·체력 배율, 사망 드롭 규칙(`DropRule`: 재료만 / 가방 전부 / 장비 포함 전부)
-- `WorldSettings`(저장되는 C# 클래스): 난이도 id, 계절 길이(일), 하루 길이. 월드를 만들 때 고르고 저장한다.
+- `WorldSettings`(저장되는 C# 클래스): 난이도 id, 계절 길이(일), 하루가 현실로 몇 초인지(`realSecondsPerDay`). 월드를 만들 때 고르고 저장한다. 하루 자체는 항상 게임 내 1440분(`WorldClock.MinutesPerDay`)으로 고정이다.
 - 사망 처리:
   1. 난이도의 `DropRule`대로 아이템을 꺼내 `DeathBagRecord { mapId, position, items }`를 만든다. 이전 기록은 덮어쓴다 (마지막 하나만).
   2. 은신처의 부활 지점으로 이동하고 스탯을 리셋한다.
@@ -289,7 +289,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 
 ```
 WorldSaveData (version 2)
-├─ settings        WorldSettings (난이도 id, 계절 길이, 하루 길이)
+├─ settings        WorldSettings (난이도 id, 계절 길이, 하루 현실 길이(초))
 ├─ clock           totalMinutes, 현재 날씨 id, 날씨 끝나는 시각
 ├─ player          현재 mapId, spawnPointId(또는 위치), 손 모드,
 │                  stats[{id, value}], statusEffects[{id, untilMinute, data}]

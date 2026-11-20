@@ -9,6 +9,9 @@ namespace Game.World
     /// </summary>
     public sealed class WorldClock : MonoBehaviour, IWorldClock
     {
+        /// <summary>하루는 항상 게임 내 1440분(24시간)이다. 바꿀 수 있는 건 하루가 현실로 몇 초인지뿐이다.</summary>
+        public const int MinutesPerDay = 1440;
+
         [SerializeField] private WorldSettings settings = new WorldSettings();
         [SerializeField] private long startMinutes = 8 * 60;
 
@@ -30,7 +33,7 @@ namespace Game.World
 
         private void Update()
         {
-            float gameMinutesPerRealSecond = settings.DayLengthMinutes / settings.RealSecondsPerDay;
+            float gameMinutesPerRealSecond = MinutesPerDay / settings.RealSecondsPerDay;
             minuteAccumulator += Time.deltaTime * gameMinutesPerRealSecond;
             if (minuteAccumulator < 1f) return;
 
@@ -43,18 +46,20 @@ namespace Game.World
         private void TickOneMinute()
         {
             long previousHour = totalMinutes / 60;
-            long previousDay = totalMinutes / settings.DayLengthMinutes;
+            long previousDay = totalMinutes / MinutesPerDay;
             totalMinutes++;
             MinutePassed?.Invoke();
             if (totalMinutes / 60 != previousHour) HourPassed?.Invoke();
-            if (totalMinutes / settings.DayLengthMinutes != previousDay) DayChanged?.Invoke();
+            if (totalMinutes / MinutesPerDay != previousDay) DayChanged?.Invoke();
         }
 
         public void Advance(long minutes)
         {
             if (minutes <= 0) return;
+            long previousDay = totalMinutes / MinutesPerDay;
             totalMinutes += minutes;
             Advanced?.Invoke(minutes);
+            if (totalMinutes / MinutesPerDay != previousDay) DayChanged?.Invoke();
         }
     }
 }

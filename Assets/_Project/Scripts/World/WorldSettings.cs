@@ -12,12 +12,10 @@ namespace Game.World
     {
         [SerializeField] private string difficultyId = "normal";
         [SerializeField] private int seasonLengthDays = 10;
-        [SerializeField] private int dayLengthMinutes = 1440;
         [SerializeField] private float realSecondsPerDay = 1200f;
 
         public string DifficultyId => difficultyId;
         public int SeasonLengthDays => seasonLengthDays;
-        public int DayLengthMinutes => dayLengthMinutes;
         public float RealSecondsPerDay => realSecondsPerDay;
     }
 }
