@@ -17,6 +17,7 @@ namespace Game.Maps
 
         public string InteractPrompt => targetMap != null ? targetMap.DisplayName : "";
         public HandRequirement RequiredHand => HandRequirement.Any;
+        public float HoldSecondsRequired => 0f;
 
         public void Interact(GameObject interactor)
         {

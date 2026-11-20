@@ -21,6 +21,7 @@ namespace Game.Maps
 
         public string InteractPrompt => "떠나기";
         public HandRequirement RequiredHand => HandRequirement.Any;
+        public float HoldSecondsRequired => 0f;
 
         public void Interact(GameObject interactor)
         {

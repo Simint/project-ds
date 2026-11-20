@@ -6,7 +6,10 @@ namespace Game.World
     /// <summary>
     /// Boot 씬에 하나. <see cref="IWorldClock"/> 구현. 생존·부패·작물은 Time.deltaTime이 아니라
     /// 이 클래스가 쌓는 게임 내 분(minute)을 기준으로 계산한다 (ARCHITECTURE.md 2.5, 4.1).
+    /// GameBootstrap이 Awake에서 저장된 시각으로 덮어쓰므로, 그보다 먼저 기본값을 정해 둬야 한다
+    /// (Unity는 서로 다른 오브젝트의 Awake 순서를 보장하지 않는다).
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public sealed class WorldClock : MonoBehaviour, IWorldClock
     {
         /// <summary>하루는 항상 게임 내 1440분(24시간)이다. 바꿀 수 있는 건 하루가 현실로 몇 초인지뿐이다.</summary>
@@ -61,5 +64,7 @@ namespace Game.World
             Advanced?.Invoke(minutes);
             if (totalMinutes / MinutesPerDay != previousDay) DayChanged?.Invoke();
         }
+
+        public void SetTotalMinutes(long minutes) => totalMinutes = minutes;
     }
 }

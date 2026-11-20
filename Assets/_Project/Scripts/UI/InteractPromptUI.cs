@@ -11,6 +11,7 @@ namespace Game.UI
     {
         [SerializeField] private GameObject root;
         [SerializeField] private Text label;
+        [SerializeField] private Image progressFill;
         [SerializeField] private Camera worldCamera;
         [SerializeField] private Vector3 worldOffset = new Vector3(0f, 0.6f, 0f);
 
@@ -31,11 +32,20 @@ namespace Game.UI
             label.text = text;
             root.SetActive(true);
             selfRect.position = worldCamera.WorldToScreenPoint(worldPosition + worldOffset);
+            SetProgress(0f);
         }
 
         public void Hide()
         {
             if (root != null) root.SetActive(false);
+        }
+
+        /// <summary>길게 누르기 진행도(0~1). 0이면 진행 칸을 숨긴다(즉시형 상호작용).</summary>
+        public void SetProgress(float fraction01)
+        {
+            if (progressFill == null) return;
+            progressFill.gameObject.SetActive(fraction01 > 0f);
+            progressFill.fillAmount = Mathf.Clamp01(fraction01);
         }
     }
 }

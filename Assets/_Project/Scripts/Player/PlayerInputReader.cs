@@ -23,11 +23,13 @@ namespace Game.Player
         private InputAction uiNavigateAction;
         private InputAction uiSubmitAction;
         private InputAction uiCancelAction;
+        private InputAction toggleInventoryAction;
 
         private bool locked;
 
         public Vector2 MoveInput { get; private set; }
         public bool RunHeld { get; private set; }
+        public bool InteractHeld { get; private set; }
         public float UINavigateInput { get; private set; }
         public bool IsLocked => locked;
 
@@ -39,8 +41,10 @@ namespace Game.Player
         public event Action JumpReleased;
         public event Action SwitchHandPressed;
         public event Action InteractPressed;
+        public event Action InteractReleased;
         public event Action UISubmitPressed;
         public event Action UICancelPressed;
+        public event Action ToggleInventoryPressed;
 
         private void Awake()
         {
@@ -58,6 +62,7 @@ namespace Game.Player
             uiNavigateAction = map.FindAction("UINavigate", throwIfNotFound: true);
             uiSubmitAction = map.FindAction("UISubmit", throwIfNotFound: true);
             uiCancelAction = map.FindAction("UICancel", throwIfNotFound: true);
+            toggleInventoryAction = map.FindAction("ToggleInventory", throwIfNotFound: true);
         }
 
         private void OnEnable()
@@ -71,13 +76,16 @@ namespace Game.Player
             uiNavigateAction.Enable();
             uiSubmitAction.Enable();
             uiCancelAction.Enable();
+            toggleInventoryAction.Enable();
 
             jumpAction.performed += HandleJumpPerformed;
             jumpAction.canceled += HandleJumpCanceled;
             switchHandAction.performed += HandleSwitchHandPerformed;
             interactAction.performed += HandleInteractPerformed;
+            interactAction.canceled += HandleInteractCanceled;
             uiSubmitAction.performed += HandleUISubmitPerformed;
             uiCancelAction.performed += HandleUICancelPerformed;
+            toggleInventoryAction.performed += HandleToggleInventoryPerformed;
         }
 
         private void OnDisable()
@@ -87,8 +95,10 @@ namespace Game.Player
             jumpAction.canceled -= HandleJumpCanceled;
             switchHandAction.performed -= HandleSwitchHandPerformed;
             interactAction.performed -= HandleInteractPerformed;
+            interactAction.canceled -= HandleInteractCanceled;
             uiSubmitAction.performed -= HandleUISubmitPerformed;
             uiCancelAction.performed -= HandleUICancelPerformed;
+            toggleInventoryAction.performed -= HandleToggleInventoryPerformed;
 
             moveAction.Disable();
             runAction.Disable();
@@ -98,6 +108,7 @@ namespace Game.Player
             uiNavigateAction.Disable();
             uiSubmitAction.Disable();
             uiCancelAction.Disable();
+            toggleInventoryAction.Disable();
         }
 
         private void Update()
@@ -105,6 +116,7 @@ namespace Game.Player
             if (moveAction == null) return;
             MoveInput = locked ? Vector2.zero : moveAction.ReadValue<Vector2>();
             RunHeld = !locked && runAction.IsPressed();
+            InteractHeld = !locked && interactAction.IsPressed();
             UINavigateInput = uiNavigateAction.ReadValue<float>();
 
             if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame) ActiveControlScheme = "Gamepad";
@@ -119,6 +131,7 @@ namespace Game.Player
             {
                 MoveInput = Vector2.zero;
                 RunHeld = false;
+                InteractHeld = false;
             }
         }
 
@@ -147,6 +160,16 @@ namespace Game.Player
         private void HandleInteractPerformed(InputAction.CallbackContext context)
         {
             if (!locked) InteractPressed?.Invoke();
+        }
+
+        private void HandleInteractCanceled(InputAction.CallbackContext context)
+        {
+            if (!locked) InteractReleased?.Invoke();
+        }
+
+        private void HandleToggleInventoryPerformed(InputAction.CallbackContext context)
+        {
+            if (!locked) ToggleInventoryPressed?.Invoke();
         }
 
         private void HandleUISubmitPerformed(InputAction.CallbackContext context)

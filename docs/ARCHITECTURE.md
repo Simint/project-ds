@@ -63,11 +63,13 @@ Assets/_Project/
 │   ├── Lore/           쪽지 수집
 │   ├── Save/           저장 DTO, SaveService, 마이그레이션
 │   └── UI/
-└── Editor/
-    └── Harness/        하네스 에디터 도구 (수정 시 주의)
+├── Editor/
+│   └── Harness/        하네스 에디터 도구 (수정 시 주의)
+└── Tests/
+    └── EditMode/       순수 로직 테스트 (Game.Tests.EditMode.asmdef)
 ```
 
-처음에는 어셈블리 정의(asmdef) 없이 시작한다 (`Editor/` 폴더는 Unity가 자동으로 에디터 전용으로 컴파일). 스크립트가 많아져 컴파일이 느려지면 그때 `Game.Runtime` / `Game.Editor`로 나누고 이 문서를 고친다. 로직 테스트(EditMode)를 시작할 때도 asmdef가 필요하다.
+`Assets/_Project/Scripts/`는 `Game.Runtime.asmdef` 하나로 묶여 있다(3단계, 인벤토리·저장 전에 만듦). `Editor/` 폴더는 Unity가 자동으로 에디터 전용으로 컴파일하고, 플랫폼을 제한하지 않은 `Game.Runtime`을 그대로 참조할 수 있다. `Tests/EditMode/`는 `Game.Runtime`을 참조하는 별도 테스트 전용 어셈블리다.
 
 ## 2. 핵심 원칙
 
@@ -287,8 +289,10 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 
 자동 저장 시점: 맵 이동 완료, 잠자기, 게임 종료. 저장 슬롯은 여러 개다 (월드마다 하나).
 
+완성된 모습(목표 스키마)은 이렇다. 단계가 늘수록 이 모양에 맞춰 필드를 채워 나간다.
+
 ```
-WorldSaveData (version 2)
+WorldSaveData (목표 스키마, 지금은 일부만 구현됨)
 ├─ settings        WorldSettings (난이도 id, 계절 길이, 하루 현실 길이(초))
 ├─ clock           totalMinutes, 현재 날씨 id, 날씨 끝나는 시각
 ├─ player          현재 mapId, spawnPointId(또는 위치), 손 모드,
@@ -301,6 +305,8 @@ WorldSaveData (version 2)
 ├─ lore            [noteId...]
 └─ deathBag        { mapId, position, items } 또는 null
 ```
+
+3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. 손 모드·스탯·장비·내구도·hub·mapUnlocks·lore·사망 주머니는 해당 단계에서 필드를 추가하며 채운다.
 
 - `JsonUtility` 또는 Newtonsoft로 `Application.persistentDataPath/saves/<slot>.json`에 저장한다.
 - 저장 구조를 바꾸면 `version`을 올리고 `Save/Migrations/`에 마이그레이션을 추가한다.

@@ -10,6 +10,9 @@ namespace Game.Player
         /// <summary>이 상호작용에 필요한 손 모드. 대부분은 Any (ARCHITECTURE.md 4.2).</summary>
         HandRequirement RequiredHand { get; }
 
+        /// <summary>0이면 눌렀을 때 바로, 0보다 크면 그만큼 눌러 담아야 완료된다 (docs/design 7.1).</summary>
+        float HoldSecondsRequired { get; }
+
         void Interact(GameObject interactor);
     }
 }

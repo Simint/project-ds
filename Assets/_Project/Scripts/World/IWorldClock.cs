@@ -6,6 +6,7 @@ namespace Game.World
     public interface IWorldClock
     {
         long TotalMinutes { get; }
+        WorldSettings Settings { get; }
 
         /// <summary>1분마다. 분마다 쏘지 않는 Advance와 달리 평상시 진행에만 쓴다.</summary>
         event Action MinutePassed;
@@ -16,5 +17,8 @@ namespace Game.World
         event Action<long> Advanced;
 
         void Advance(long minutes);
+
+        /// <summary>저장 파일을 불러올 때만 쓴다. Advance와 달리 이벤트를 쏘지 않고 값만 맞춘다.</summary>
+        void SetTotalMinutes(long minutes);
     }
 }

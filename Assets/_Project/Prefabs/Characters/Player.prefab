@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 353201493500177562}
   - component: {fileID: 7050079904660406002}
   - component: {fileID: 963269600960441317}
+  - component: {fileID: 5480470572356274239}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -163,6 +164,22 @@ MonoBehaviour:
   settings: {fileID: 11400000, guid: 6670b33804b15904882a89ca0fb3e68b, type: 2}
   groundCheckOffset: {x: 0, y: 0.05}
   groundCheckSize: {x: 0.4, y: 0.1}
+--- !u!114 &5480470572356274239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44bb2527379ecac4ab0313cb9c2b7305, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Inventory.PlayerInventory
+  itemDatabase: {fileID: 11400000, guid: e74f8465c2deb924e81ce52fbbafd73e, type: 2}
+  pickupPrefab: {fileID: 8657213249867274546, guid: f3e402e4e159b1d40972f2ccf3813b2b, type: 3}
+  slotCount: 20
+  weightLimit: 50
 --- !u!1 &7658787558271473459
 GameObject:
   m_ObjectHideFlags: 0
