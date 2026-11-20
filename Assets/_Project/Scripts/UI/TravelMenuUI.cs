@@ -50,6 +50,9 @@ namespace Game.UI
                 spawnedButtons.Add(button);
             }
             panelRoot.SetActive(true);
+            // VerticalLayoutGroup은 동적으로 추가된 자식의 다음 리빌드까지 기다리지 않는다.
+            // 버튼이 폭 0으로 한 프레임 보일 수 있어 바로 강제로 다시 계산한다.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(listParent);
         }
 
         public void Hide()
