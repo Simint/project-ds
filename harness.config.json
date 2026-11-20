@@ -5,7 +5,7 @@
 
   "tilePixelSize": 16,
   "pixelsPerUnit": 16,
-  "referenceResolution": [480, 270],
+  "referenceResolution": [320, 180],
 
   "artRoot": "Assets/_Project/Art",
   "bottomPivotFolders": [

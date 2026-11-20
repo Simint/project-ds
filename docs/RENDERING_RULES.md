@@ -9,7 +9,7 @@
 |---|---|
 | 타일 크기 | 16×16 px |
 | Pixels Per Unit | 16 (타일 1칸 = 1 유닛) |
-| Pixel Perfect Camera Reference Resolution | 480×270 (16:9, 정수배 업스케일) |
+| Pixel Perfect Camera Reference Resolution | 320×180 (16:9, 정수배 업스케일) |
 | 렌더 파이프라인 | URP, 2D Renderer |
 | Transparency Sort Mode | **Default** (Custom Axis 금지) |
 
@@ -81,7 +81,7 @@
 
 ## 5. 카메라
 
-- Main Camera에 `PixelPerfectCamera` (Assets PPU 16, Reference 480×270, Crop Frame None, Grid Snapping = Upscale Render Texture 또는 Pixel Snapping).
+- Main Camera에 `PixelPerfectCamera` (Assets PPU 16, Reference 320×180, Crop Frame None, Grid Snapping = Upscale Render Texture 또는 Pixel Snapping).
 - 따라가기는 Cinemachine + `CinemachinePixelPerfect` 확장 + `CinemachineConfiner2D`로 맵 밖을 비추지 않게 한다.
 - 2D 조명을 쓸 때 빛이 매끈한 그라데이션으로 보이면 Upscale Render Texture를 켠다.
 

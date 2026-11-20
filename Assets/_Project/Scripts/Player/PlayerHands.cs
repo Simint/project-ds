@@ -12,6 +12,7 @@ namespace Game.Player
     {
         [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private PlayerHandSettings settings;
+        [SerializeField] private SpriteRenderer bodyRenderer;
 
         private float transitionRemainingSeconds;
 
@@ -25,6 +26,7 @@ namespace Game.Player
         {
             if (inputReader == null) Debug.LogError("[PlayerHands] inputReader 참조가 비어 있습니다.", this);
             if (settings == null) Debug.LogError("[PlayerHands] settings 참조가 비어 있습니다.", this);
+            if (bodyRenderer == null) Debug.LogError("[PlayerHands] bodyRenderer 참조가 비어 있습니다.", this);
         }
 
         private void OnEnable()
@@ -40,6 +42,7 @@ namespace Game.Player
         private void Update()
         {
             if (transitionRemainingSeconds > 0f) transitionRemainingSeconds -= Time.deltaTime;
+            RefreshBodyColor();
         }
 
         /// <summary>전환 중에는 Any를 포함해 어떤 행동도 허용하지 않는다.</summary>
@@ -57,6 +60,15 @@ namespace Game.Player
             Mode = Mode == HandMode.Human ? HandMode.Beast : HandMode.Human;
             transitionRemainingSeconds = settings != null ? settings.TransitionSeconds : 0f;
             HandModeChanged?.Invoke(Mode);
+        }
+
+        /// <summary>그림이 나오기 전까지 플레이어 임시 사각형 색을 손 모드에 맞춘다 (docs/design 9.5).</summary>
+        private void RefreshBodyColor()
+        {
+            if (bodyRenderer == null || settings == null) return;
+            bodyRenderer.color = IsTransitioning
+                ? settings.TransitioningColor
+                : (Mode == HandMode.Beast ? settings.BeastColor : settings.HumanColor);
         }
     }
 }
