@@ -20,6 +20,7 @@ namespace Game.Maps
         private readonly List<MapDefinition> unlockedRegions = new List<MapDefinition>();
 
         public string InteractPrompt => "떠나기";
+        public HandRequirement RequiredHand => HandRequirement.Any;
 
         public void Interact(GameObject interactor)
         {

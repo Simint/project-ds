@@ -51,7 +51,7 @@
 |---|---|
 | `Player` | 플레이어 몸 |
 | `Enemy` | 몬스터 몸 |
-| `Ground` | 땅 타일맵 (TilemapCollider2D + CompositeCollider2D) |
+| `Ground` | 땅 타일맵, 그리고 손으로 놓은 맵 경계(벽)·높이가 다른 발판처럼 타일맵이 아닌 단단한 지형 콜라이더도 같은 레이어를 쓴다. 플레이어가 지은 것만 `Structure`로 구분한다 |
 | `OneWayPlatform` | 아래에서 뚫고 올라가는 발판 (PlatformEffector2D) |
 | `Structure` | 플레이어가 지은 단단한 블록·벽·닫힌 문 |
 | `Interactable` | 채집물, 작업대, 상자 등의 **상호작용 트리거** |

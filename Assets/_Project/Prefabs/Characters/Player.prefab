@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 8855347037346460758}
   - component: {fileID: 1078148139969363343}
   - component: {fileID: 4376654180812441932}
-  - component: {fileID: 4906533506265328754}
   - component: {fileID: 353201493500177562}
+  - component: {fileID: 7050079904660406002}
+  - component: {fileID: 963269600960441317}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -52,7 +53,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 0
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -114,20 +115,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerInputReader
   actions: {fileID: -944628639613478452, guid: 78c2468c86494adaa069b8f7d0bcdac9, type: 3}
---- !u!114 &4906533506265328754
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7143551093432253046}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6d4a511bf2d2534c81cbf39958a8f61, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerMotor
-  inputReader: {fileID: 4376654180812441932}
-  moveSpeed: 4
 --- !u!114 &353201493500177562
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,7 +128,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerInteractor
   inputReader: {fileID: 4376654180812441932}
+  hands: {fileID: 7050079904660406002}
   interactRadius: 1
+--- !u!114 &7050079904660406002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e007bdf77be678478cad70580f4adf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerHands
+  inputReader: {fileID: 4376654180812441932}
+  settings: {fileID: 11400000, guid: e3d7f9b98a4ecd54bafed9ba74789b45, type: 2}
+--- !u!114 &963269600960441317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a512dc97ed510e84d8858ca550a48b8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerController
+  inputReader: {fileID: 4376654180812441932}
+  hands: {fileID: 7050079904660406002}
+  settings: {fileID: 11400000, guid: 6670b33804b15904882a89ca0fb3e68b, type: 2}
+  groundCheckOffset: {x: 0, y: 0.05}
+  groundCheckSize: {x: 0.4, y: 0.1}
 --- !u!1 &7658787558271473459
 GameObject:
   m_ObjectHideFlags: 0

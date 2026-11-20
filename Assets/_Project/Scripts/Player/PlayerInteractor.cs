@@ -10,6 +10,7 @@ namespace Game.Player
     public sealed class PlayerInteractor : MonoBehaviour
     {
         [SerializeField] private PlayerInputReader inputReader;
+        [SerializeField] private PlayerHands hands;
         [SerializeField] private float interactRadius = 1f;
 
         private readonly Collider2D[] overlapResults = new Collider2D[8];
@@ -21,6 +22,7 @@ namespace Game.Player
             interactableFilter.SetLayerMask(GameLayers.InteractableMask);
             interactableFilter.useTriggers = true;
             if (inputReader == null) Debug.LogError("[PlayerInteractor] inputReader 참조가 비어 있습니다.", this);
+            if (hands == null) Debug.LogError("[PlayerInteractor] hands 참조가 비어 있습니다.", this);
         }
 
         private void OnEnable()
@@ -48,6 +50,7 @@ namespace Game.Player
             {
                 IInteractable candidate = overlapResults[i].GetComponentInParent<IInteractable>();
                 if (candidate == null) continue;
+                if (hands != null && !hands.AllowsHand(candidate.RequiredHand)) continue;
                 float sqrDistance = ((Vector2)overlapResults[i].transform.position - (Vector2)transform.position).sqrMagnitude;
                 if (sqrDistance >= nearestSqrDistance) continue;
                 nearestSqrDistance = sqrDistance;

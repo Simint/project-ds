@@ -16,6 +16,7 @@ namespace Game.Maps
         [SerializeField] private string targetSpawnPointId = "";
 
         public string InteractPrompt => targetMap != null ? targetMap.DisplayName : "";
+        public HandRequirement RequiredHand => HandRequirement.Any;
 
         public void Interact(GameObject interactor)
         {

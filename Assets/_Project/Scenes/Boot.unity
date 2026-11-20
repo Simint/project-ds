@@ -1825,6 +1825,7 @@ MonoBehaviour:
   screenFader: {fileID: 1086902872}
   cameraConfiner: {fileID: 2070034808}
   playerBody: {fileID: 928987475}
+  playerInput: {fileID: 1577566002}
   startMap: {fileID: 11400000, guid: d6e08b5caacd9cc45aee423372407a8a, type: 2}
   startSpawnPointId: start
 --- !u!4 &1496509711
@@ -1842,6 +1843,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 716893304}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1577566002 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4376654180812441932, guid: 95da18d63ae7ada47920ddc6f673740c, type: 3}
+  m_PrefabInstance: {fileID: 928987474}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d578dba634d46c4b97c35b5e612630b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerInputReader
 --- !u!114 &1583424593
 MonoBehaviour:
   m_ObjectHideFlags: 0

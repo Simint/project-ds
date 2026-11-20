@@ -85,7 +85,7 @@ Assets/_Project/
 6. **물리 이동은 Rigidbody2D로만.** 플레이어·적은 `Rigidbody2D.linearVelocity`로 움직인다. Interpolate 켬, 플레이어는 Collision Detection = Continuous.
    - 예외: 맵 이동 후 스폰 지점으로 옮길 때는 `rb.position`을 정하고 `linearVelocity`를 0으로 만든다. 이 경우에도 `transform.position`은 쓰지 않는다.
 7. **입력은 Input System만.** `Assets/_Project/Settings/Controls.inputactions`에 액션을 정의한다. 구 `Input.GetKey`는 금지다.
-   - 지금은 Keyboard&Mouse 컨트롤 스킴만 만든다. 나중에 Gamepad 스킴을 추가할 수 있게, 게임플레이 코드는 마우스 위치를 직접 읽지 않는다. 대신 `PlayerInputReader`가 주는 조준 방향을 쓴다.
+   - Keyboard&Mouse와 Gamepad 컨트롤 스킴을 함께 둔다. 게임플레이 코드는 마우스 위치를 직접 읽지 않는다. 대신 `PlayerInputReader`가 주는 조준 방향을 쓴다.
    - `Assets/Settings/InputSystem_Actions.inputactions`(Unity 기본 템플릿)는 쓰지 않는다.
 8. **레이어 이름·마스크는 `GameLayers`에서만.** 코드에 `"Ground"` 같은 문자열을 쓰지 않는다.
 9. **물리 쿼리보다 등록부(registry).** 소음, 후각, 환경 구역처럼 "주변의 무엇"을 찾는 기능은 물리 레이어를 새로 만들지 않는다. 대상이 `OnEnable`/`OnDisable`에서 등록부에 들어가고, 시스템이 그 목록을 거리·영역으로 훑는다. 맵 하나에 대상이 수십~수백 개라 이 방식이 충분히 빠르고, 할당도 없다.
@@ -187,14 +187,14 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 
 ### 4.2 플레이어 (`Player/`)
 
-- `PlayerController`: 상태 머신 (Idle, Run, BeastRun, Jump, Fall, Attack, Harvest, Dig, Interact, Stunned). 상태별 클래스로 나눈다.
+- `PlayerController`: 상태 머신. Idle/Run/BeastRun은 물리 계산이 같고 프리셋(`PlayerMovementSettings`)만 다르므로 `Grounded` 상태 하나가 맡고, Jump와 Fall은 중력 계산이 달라 따로 상태를 둔다(`Grounded`/`Jumping`/`Falling`, `IPlayerMotionState`). Attack, Harvest, Dig, Interact, Stunned는 해당 시스템이 생기는 단계(3·6·7단계)에서 상태를 추가한다.
 - `PlayerInputReader`: `Controls.inputactions`를 읽어 이동·조준·버튼을 내보낸다. 게임플레이 코드는 Input System을 직접 만지지 않는다.
 - 이동 파라미터는 `PlayerMovementSettings` ScriptableObject에 모은다. 최고 속도, 가속/감속, 점프 높이, 코요테 타임(0.1s), 점프 버퍼(0.1s), 가변 점프, 최대 낙하 속도가 들어간다.
-  - 두 프리셋을 둔다: `upright`(사람 손 기본)와 `beastRun`(네 발 달리기).
+  - 세 프리셋을 둔다: `walk`(두 발 걷기, 기본), `run`(사람 손 + 달리기 키), `beastRun`(짐승 손 + 달리기 키, 네 발). 짐승 손이라도 달리기 키를 누르지 않으면 `walk`다.
   - 무게 보정: `InventoryModel.WeightRatio` → 속도·점프 배율 곡선(`AnimationCurve`)
   - 부상 보정: 골절이면 속도·점프 배율을 낮춘다.
 - **`PlayerHands`(손 모드):** `HandMode { Human, Beast }`
-  - 전환은 `transitionSeconds`(기본 0.5) 동안 걸린다. 그동안 공격과 상호작용을 막는다. 이벤트는 `HandModeChanged`이다.
+  - 전환은 `transitionSeconds`(정의 데이터, 값은 `docs/design/`) 동안 걸린다. 그동안 공격과 상호작용을 막는다. 이벤트는 `HandModeChanged`이다.
   - `Beast` 동안: 허기 감소 배율을 생존 스탯 모디파이어로 등록한다. 손에 든 아이템 사용을 막는다. 장갑 슬롯은 해제한다.
   - 행동 허용 검사는 `HandRequirement { Any, Human, Beast }` 하나로 통일한다. 아이템(`ItemDefinition.requiredHand`), 레시피, 상호작용(`IInteractable.RequiredHand`)이 이 값을 가진다.
 - **`ScentSense`(후각):** 쿨타임과 허기 비용이 있다. `ScentSystem`에 등록된 `ScentSource`(음식, 아이템, 적, 방사능 구역, DigSpot)를 반경 안에서 찾아 FX 풀로 흔적을 보여 준다.

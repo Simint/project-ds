@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Game.Core;
+using Game.Player;
 using Game.UI;
 using Game.World;
 using Unity.Cinemachine;
@@ -18,6 +19,7 @@ namespace Game.Maps
         [SerializeField] private ScreenFader screenFader;
         [SerializeField] private CinemachineConfiner2D cameraConfiner;
         [SerializeField] private Rigidbody2D playerBody;
+        [SerializeField] private PlayerInputReader playerInput;
         [SerializeField] private MapDefinition startMap;
         [SerializeField] private string startSpawnPointId = "";
 
@@ -36,6 +38,7 @@ namespace Game.Maps
             if (screenFader == null) Debug.LogError("[MapLoader] screenFader 참조가 비어 있습니다.", this);
             if (cameraConfiner == null) Debug.LogError("[MapLoader] cameraConfiner 참조가 비어 있습니다.", this);
             if (playerBody == null) Debug.LogError("[MapLoader] playerBody 참조가 비어 있습니다.", this);
+            if (playerInput == null) Debug.LogError("[MapLoader] playerInput 참조가 비어 있습니다.", this);
             if (startMap == null) Debug.LogError("[MapLoader] startMap 참조가 비어 있습니다.", this);
         }
 
@@ -62,7 +65,7 @@ namespace Game.Maps
             {
                 CancellationToken token = destroyCancellationToken;
 
-                // TODO(2단계): 페이드 아웃과 함께 플레이어 입력 잠금 (ARCHITECTURE.md 3.3), 끝나면 해제
+                playerInput?.SetLocked(true);
                 if (screenFader != null) await screenFader.FadeOut(token);
 
                 // TODO(3단계): 현재 맵의 IPersistentObject -> MapStateRegistry.Capture (ARCHITECTURE.md 3.4)
@@ -96,6 +99,7 @@ namespace Game.Maps
             }
             finally
             {
+                playerInput?.SetLocked(false);
                 travelInProgress = false;
             }
         }
