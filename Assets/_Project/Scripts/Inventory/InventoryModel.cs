@@ -38,7 +38,7 @@ namespace Game.Inventory
         /// 같은 itemId 스택부터 채우고, 남으면 빈 슬롯에 새로 쌓는다. 다 못 담으면 남은 개수를 돌려준다
         /// (호출한 쪽이 Pickup으로 땅에 떨어뜨린다, 7.1).
         /// </summary>
-        public int TryAdd(string itemId, int count, int maxStackSize, float unitWeight)
+        public int TryAdd(string itemId, int count, int maxStackSize, float unitWeight, long spoilAtMinute = 0)
         {
             if (string.IsNullOrEmpty(itemId) || count <= 0) return count;
             int remaining = count;
@@ -50,6 +50,7 @@ namespace Game.Inventory
                 int add = Math.Min(remaining, slot.RemainingCapacity);
                 if (add <= 0) continue;
                 slot.Add(add);
+                slot.MergeSpoilAtMinute(spoilAtMinute);
                 remaining -= add;
             }
 
@@ -57,7 +58,7 @@ namespace Game.Inventory
             {
                 if (slots[i] != null && !slots[i].IsEmpty) continue;
                 int add = Math.Min(remaining, maxStackSize);
-                slots[i] = new InventorySlot(itemId, add, maxStackSize, unitWeight);
+                slots[i] = new InventorySlot(itemId, add, maxStackSize, unitWeight, spoilAtMinute);
                 remaining -= add;
             }
 
@@ -84,6 +85,21 @@ namespace Game.Inventory
             int removed = count - remaining;
             if (removed > 0) Changed?.Invoke();
             return removed;
+        }
+
+        /// <summary>정확히 이 슬롯 번호에서만 치운다 (같은 아이템이라도 슬롯마다 부패 시각이 다를 수 있어,
+        /// 사용 UI가 고른 슬롯을 그대로 써야 한다).</summary>
+        public int RemoveFromSlot(int slotIndex, int amount)
+        {
+            if (slotIndex < 0 || slotIndex >= slots.Length || amount <= 0) return 0;
+            InventorySlot slot = slots[slotIndex];
+            if (slot == null || slot.IsEmpty) return 0;
+
+            int take = Math.Min(amount, slot.Count);
+            slot.Remove(take);
+            if (slot.IsEmpty) slots[slotIndex] = null;
+            if (take > 0) Changed?.Invoke();
+            return take;
         }
 
         public int CountOf(string itemId)

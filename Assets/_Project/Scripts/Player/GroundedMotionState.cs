@@ -13,7 +13,7 @@ namespace Game.Player
         {
             Rigidbody2D body = controller.Body;
             MovementPreset preset = controller.ResolvePreset();
-            float x = preset.NextHorizontalVelocity(body.linearVelocity.x, controller.HorizontalInput, 1f, deltaTime);
+            float x = preset.NextHorizontalVelocity(body.linearVelocity.x, controller.HorizontalInput, controller.SpeedMultiplier, deltaTime);
             body.linearVelocity = new Vector2(x, 0f);
 
             if (!controller.IsGrounded) controller.ChangeState(controller.FallingState);

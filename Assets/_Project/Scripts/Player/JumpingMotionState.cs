@@ -15,7 +15,7 @@ namespace Game.Player
             PlayerMovementSettings settings = controller.Settings;
             MovementPreset preset = controller.ResolvePreset();
 
-            float x = preset.NextHorizontalVelocity(body.linearVelocity.x, controller.HorizontalInput, settings.AirControl, deltaTime);
+            float x = preset.NextHorizontalVelocity(body.linearVelocity.x, controller.HorizontalInput, settings.AirControl * controller.SpeedMultiplier, deltaTime);
             float y = body.linearVelocity.y - settings.Gravity * deltaTime;
             body.linearVelocity = new Vector2(x, y);
 

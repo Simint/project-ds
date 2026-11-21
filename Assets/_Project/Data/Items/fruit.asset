@@ -19,3 +19,12 @@ MonoBehaviour:
   weight: 0.1
   category: 5
   requiredHand: 0
+  isConsumable: 1
+  consumable:
+    statRestores:
+    - statId: hunger
+      amount: 15
+    spoilMinutes: 4320
+    spoiledItemId: spoiled_fruit
+    sicknessChance: 0
+    curesStatusEffectId: 

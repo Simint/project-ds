@@ -112,6 +112,14 @@ MonoBehaviour:
     count: 2
   - itemId: scrap_metal
     count: 1
+  - itemId: water_bottle
+    count: 2
+  - itemId: bandage
+    count: 1
+  - itemId: splint
+    count: 1
+  - itemId: medicine_pills
+    count: 1
   interactPrompt: "\uB4A4\uC9C0\uAE30"
 --- !u!1 &4799326267600346278
 GameObject:

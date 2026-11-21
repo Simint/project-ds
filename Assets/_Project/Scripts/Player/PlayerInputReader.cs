@@ -24,6 +24,15 @@ namespace Game.Player
         private InputAction uiSubmitAction;
         private InputAction uiCancelAction;
         private InputAction toggleInventoryAction;
+        private InputAction[] hotbarSlotActions;
+        private InputAction hotbarNextAction;
+        private InputAction hotbarPrevAction;
+        private InputAction hotbarScrollAction;
+        private InputAction useItemAction;
+
+        // hotbarSlotActions마다 OnEnable/OnDisable에서 같은 델리게이트로 구독·해제해야 해서
+        // (람다를 매번 새로 만들면 해제할 수 없다, .claude/rules/csharp.md) Awake에서 한 번 만들어 둔다.
+        private Action<InputAction.CallbackContext>[] hotbarSlotHandlers;
 
         private bool locked;
 
@@ -31,6 +40,9 @@ namespace Game.Player
         public bool RunHeld { get; private set; }
         public bool InteractHeld { get; private set; }
         public float UINavigateInput { get; private set; }
+
+        /// <summary>마우스 휠 세로 값. 한 틱(한 칸)만큼만 오르내리고 다음 프레임에 0으로 돌아온다.</summary>
+        public float HotbarScrollInput { get; private set; }
         public bool IsLocked => locked;
 
         /// <summary>마지막으로 입력을 보낸 장치의 컨트롤 스킴 ("Keyboard&Mouse" 또는 "Gamepad"). 상호작용
@@ -45,6 +57,14 @@ namespace Game.Player
         public event Action UISubmitPressed;
         public event Action UICancelPressed;
         public event Action ToggleInventoryPressed;
+
+        /// <summary>단축칸 1~9,0을 직접 골랐을 때 (인덱스 0~9, '0' 키는 인덱스 9).</summary>
+        public event Action<int> HotbarSlotSelected;
+        public event Action HotbarNextPressed;
+        public event Action HotbarPrevPressed;
+
+        /// <summary>단축칸 선택 아이템 사용 (마우스 우클릭/F/패드 오른쪽 트리거, docs/design/GAME_DESIGN.md 3.1).</summary>
+        public event Action UseItemPressed;
 
         private void Awake()
         {
@@ -63,6 +83,20 @@ namespace Game.Player
             uiSubmitAction = map.FindAction("UISubmit", throwIfNotFound: true);
             uiCancelAction = map.FindAction("UICancel", throwIfNotFound: true);
             toggleInventoryAction = map.FindAction("ToggleInventory", throwIfNotFound: true);
+            hotbarNextAction = map.FindAction("HotbarNext", throwIfNotFound: true);
+            hotbarPrevAction = map.FindAction("HotbarPrev", throwIfNotFound: true);
+            hotbarScrollAction = map.FindAction("HotbarScroll", throwIfNotFound: true);
+            useItemAction = map.FindAction("UseItem", throwIfNotFound: true);
+
+            hotbarSlotActions = new InputAction[10];
+            hotbarSlotHandlers = new Action<InputAction.CallbackContext>[10];
+            for (int i = 0; i < hotbarSlotActions.Length; i++)
+            {
+                string actionName = i == 9 ? "Hotbar0" : $"Hotbar{i + 1}";
+                hotbarSlotActions[i] = map.FindAction(actionName, throwIfNotFound: true);
+                int index = i;
+                hotbarSlotHandlers[i] = _ => { if (!locked) HotbarSlotSelected?.Invoke(index); };
+            }
         }
 
         private void OnEnable()
@@ -77,6 +111,10 @@ namespace Game.Player
             uiSubmitAction.Enable();
             uiCancelAction.Enable();
             toggleInventoryAction.Enable();
+            hotbarNextAction.Enable();
+            hotbarPrevAction.Enable();
+            hotbarScrollAction.Enable();
+            useItemAction.Enable();
 
             jumpAction.performed += HandleJumpPerformed;
             jumpAction.canceled += HandleJumpCanceled;
@@ -86,6 +124,15 @@ namespace Game.Player
             uiSubmitAction.performed += HandleUISubmitPerformed;
             uiCancelAction.performed += HandleUICancelPerformed;
             toggleInventoryAction.performed += HandleToggleInventoryPerformed;
+            hotbarNextAction.performed += HandleHotbarNextPerformed;
+            hotbarPrevAction.performed += HandleHotbarPrevPerformed;
+            useItemAction.performed += HandleUseItemPerformed;
+
+            for (int i = 0; i < hotbarSlotActions.Length; i++)
+            {
+                hotbarSlotActions[i].Enable();
+                hotbarSlotActions[i].performed += hotbarSlotHandlers[i];
+            }
         }
 
         private void OnDisable()
@@ -99,6 +146,15 @@ namespace Game.Player
             uiSubmitAction.performed -= HandleUISubmitPerformed;
             uiCancelAction.performed -= HandleUICancelPerformed;
             toggleInventoryAction.performed -= HandleToggleInventoryPerformed;
+            hotbarNextAction.performed -= HandleHotbarNextPerformed;
+            hotbarPrevAction.performed -= HandleHotbarPrevPerformed;
+            useItemAction.performed -= HandleUseItemPerformed;
+
+            for (int i = 0; i < hotbarSlotActions.Length; i++)
+            {
+                hotbarSlotActions[i].performed -= hotbarSlotHandlers[i];
+                hotbarSlotActions[i].Disable();
+            }
 
             moveAction.Disable();
             runAction.Disable();
@@ -109,6 +165,10 @@ namespace Game.Player
             uiSubmitAction.Disable();
             uiCancelAction.Disable();
             toggleInventoryAction.Disable();
+            hotbarNextAction.Disable();
+            hotbarPrevAction.Disable();
+            hotbarScrollAction.Disable();
+            useItemAction.Disable();
         }
 
         private void Update()
@@ -118,6 +178,7 @@ namespace Game.Player
             RunHeld = !locked && runAction.IsPressed();
             InteractHeld = !locked && interactAction.IsPressed();
             UINavigateInput = uiNavigateAction.ReadValue<float>();
+            HotbarScrollInput = locked ? 0f : hotbarScrollAction.ReadValue<float>();
 
             if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame) ActiveControlScheme = "Gamepad";
             else if (Keyboard.current != null && Keyboard.current.wasUpdatedThisFrame) ActiveControlScheme = "Keyboard&Mouse";
@@ -170,6 +231,23 @@ namespace Game.Player
         private void HandleToggleInventoryPerformed(InputAction.CallbackContext context)
         {
             if (!locked) ToggleInventoryPressed?.Invoke();
+        }
+
+        private void HandleHotbarNextPerformed(InputAction.CallbackContext context)
+        {
+            if (!locked) HotbarNextPressed?.Invoke();
+        }
+
+        private void HandleHotbarPrevPerformed(InputAction.CallbackContext context)
+        {
+            if (!locked) HotbarPrevPressed?.Invoke();
+        }
+
+        /// <summary>가방(Tab)이 열려 있는 동안에도 아이템을 쓸 수 있어야 해서 locked의 영향을 받지 않는다
+        /// (UISubmit/UICancel과 같은 예외, docs/design/GAME_DESIGN.md 7).</summary>
+        private void HandleUseItemPerformed(InputAction.CallbackContext context)
+        {
+            UseItemPressed?.Invoke();
         }
 
         private void HandleUISubmitPerformed(InputAction.CallbackContext context)

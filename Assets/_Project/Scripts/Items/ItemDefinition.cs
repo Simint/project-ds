@@ -18,6 +18,8 @@ namespace Game.Items
         [SerializeField] private float weight = 0.1f;
         [SerializeField] private ItemCategory category = ItemCategory.Material;
         [SerializeField] private HandRequirement requiredHand = HandRequirement.Any;
+        [SerializeField] private bool isConsumable;
+        [SerializeField] private ConsumableData consumable = new ConsumableData();
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -26,5 +28,9 @@ namespace Game.Items
         public float Weight => weight;
         public ItemCategory Category => category;
         public HandRequirement RequiredHand => requiredHand;
+
+        /// <summary>단축칸 사용 키로 쓸 수 있는 아이템인지 (음식·물·의약품, docs/design/GAME_DESIGN.md 3.1).</summary>
+        public bool IsConsumable => isConsumable;
+        public ConsumableData Consumable => consumable;
     }
 }

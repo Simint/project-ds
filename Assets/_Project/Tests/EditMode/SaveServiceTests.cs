@@ -54,7 +54,9 @@ public sealed class SaveServiceTests
                         new ObjectSaveData { persistentId = "abc", state = 1, untilMinute = 999, extra = null }
                     }
                 }
-            }
+            },
+            stats = new List<StatSaveData> { new StatSaveData { id = "hp", value = 42.5f } },
+            statusEffects = new List<StatusEffectSaveData> { new StatusEffectSaveData { id = "fracture", untilMinute = 0 } }
         };
 
         service.Save(data);
@@ -71,5 +73,10 @@ public sealed class SaveServiceTests
         Assert.AreEqual("map_hub", loaded.maps[0].mapId);
         Assert.AreEqual(1, loaded.maps[0].objects.Count);
         Assert.AreEqual("abc", loaded.maps[0].objects[0].persistentId);
+        Assert.AreEqual(1, loaded.stats.Count);
+        Assert.AreEqual("hp", loaded.stats[0].id);
+        Assert.AreEqual(42.5f, loaded.stats[0].value, 0.001f);
+        Assert.AreEqual(1, loaded.statusEffects.Count);
+        Assert.AreEqual("fracture", loaded.statusEffects[0].id);
     }
 }

@@ -84,6 +84,7 @@ Assets/_Project/
    - 플레이 중 생성되는 것(건설물, 떨어진 아이템, 사망 주머니, 적 개체)에는 쓰지 않는다.
 4. **로직과 표시를 나눈다.** 인벤토리·스탯·제작·맵 상태는 MonoBehaviour 없이 테스트할 수 있는 C# 클래스로 짠다. MonoBehaviour와 UI는 그 모델을 구독만 한다 (C# `event`).
 5. **게임 시간은 `WorldClock`만 쓴다.** 생존 수치, 리스폰, 부패, 작물, 날씨는 `Time.deltaTime`이 아니라 게임 내 분(minute) 단위로 계산한다. 그래야 맵 이동 시간 건너뛰기와 재방문 계산이 같은 코드로 된다.
+   - 예외: **스태미나**는 달리기 키 입력에 실시간으로 반응해야 해서 `Time.deltaTime`으로 갱신한다(4.3). 하루 길이(`realSecondsPerDay`) 설정과 무관하게 항상 같은 체력 소모로 느껴져야 하기 때문이다.
 6. **물리 이동은 Rigidbody2D로만.** 플레이어·적은 `Rigidbody2D.linearVelocity`로 움직인다. Interpolate 켬, 플레이어는 Collision Detection = Continuous.
    - 예외: 맵 이동 후 스폰 지점으로 옮길 때는 `rb.position`을 정하고 `linearVelocity`를 0으로 만든다. 이 경우에도 `transform.position`은 쓰지 않는다.
 7. **입력은 Input System만.** `Assets/_Project/Settings/Controls.inputactions`에 액션을 정의한다. 구 `Input.GetKey`는 금지다.
@@ -208,6 +209,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 - `SurvivalStatDefinition`: id, 최대값, 분당 감소량, 0일 때 효과. 스탯은 HP, 허기, 갈증, 체온, 스태미나, 방사능 피폭이다.
 - `SurvivalStats`: 여러 `SurvivalStat`을 묶은 모델. `WorldClock.MinutePassed`마다 갱신하고, `Advanced(minutes)`에서는 한 번에 계산한다.
   - 모디파이어(배율·가산)는 출처별로 등록·해제한다: 손 모드, 날씨, 구역, 상태 이상, 난이도, 장비. 저장하지 않는다 (불러온 뒤 환경에서 다시 등록됨).
+  - **스태미나는 예외다.** 달리기 키에 실시간으로 반응해야 해서 `SurvivalStats.Tick`이 아니라 `PlayerSurvival.Update`가 `Time.deltaTime`으로 직접 갱신한다(2장 원칙 5의 예외). 나머지 네 스탯(HP·허기·갈증·체온)은 그대로 `WorldClock` 기준이다.
 - 방사능 피폭: 분마다 들어오는 양 = 맵 기본 오염도 + 구역 + 낙진(실외일 때) + 변이 좀비 피격. 여기서 방호 장비 등급만큼 줄인다. 들어오는 양이 0이고 오염 맵이 아니면 서서히 회복한다. 피폭 단계는 `StatusEffect`로 표현한다.
 - `StatusEffectDefinition`: id, 지속(시간 또는 치료할 때까지), 스탯 모디파이어, 이동 보정, 치료 아이템 태그. 출혈, 골절, 식중독·질병, 피폭 단계 1~4가 여기에 해당한다.
 - `StatusEffects`: 현재 걸린 상태 목록 (상태 C# 클래스). 저장 대상이다.

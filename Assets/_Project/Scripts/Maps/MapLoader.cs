@@ -5,6 +5,7 @@ using Game.Core;
 using Game.Inventory;
 using Game.Player;
 using Game.Save;
+using Game.Survival;
 using Game.UI;
 using Game.World;
 using Unity.Cinemachine;
@@ -25,6 +26,8 @@ namespace Game.Maps
         [SerializeField] private Rigidbody2D playerBody;
         [SerializeField] private PlayerInputReader playerInput;
         [SerializeField] private PlayerInventory playerInventory;
+        [SerializeField] private PlayerSurvival playerSurvival;
+        [SerializeField] private PlayerStatusEffects playerStatusEffects;
         [SerializeField] private MapDefinition startMap;
         [SerializeField] private string startSpawnPointId = "";
 
@@ -40,6 +43,9 @@ namespace Game.Maps
 
         public MapDefinition CurrentMap => currentRoot != null ? currentRoot.Definition : null;
 
+        /// <summary>맵 전환(페이드·씬 로드) 도중인지. 이 동안은 아이템 사용 등 일부 입력을 건너뛴다.</summary>
+        public bool IsTraveling => travelInProgress;
+
         /// <summary>맵 이동이 끝날 때마다 (현재 맵 정의와 함께) 발행한다. DebugHud 등이 구독한다.</summary>
         public event Action<MapDefinition> MapChanged;
 
@@ -50,6 +56,8 @@ namespace Game.Maps
             if (playerBody == null) Debug.LogError("[MapLoader] playerBody 참조가 비어 있습니다.", this);
             if (playerInput == null) Debug.LogError("[MapLoader] playerInput 참조가 비어 있습니다.", this);
             if (playerInventory == null) Debug.LogError("[MapLoader] playerInventory 참조가 비어 있습니다.", this);
+            if (playerSurvival == null) Debug.LogError("[MapLoader] playerSurvival 참조가 비어 있습니다.", this);
+            if (playerStatusEffects == null) Debug.LogError("[MapLoader] playerStatusEffects 참조가 비어 있습니다.", this);
             if (startMap == null) Debug.LogError("[MapLoader] startMap 참조가 비어 있습니다.", this);
         }
 
@@ -161,8 +169,16 @@ namespace Game.Maps
             };
 
             if (playerInventory != null)
-                foreach ((string itemId, int count) in playerInventory.EnumerateSlots())
-                    data.inventorySlots.Add(new InventorySlotData { itemId = itemId, count = count });
+                foreach ((string itemId, int count, long spoilAtMinute) in playerInventory.EnumerateSlots())
+                    data.inventorySlots.Add(new InventorySlotData { itemId = itemId, count = count, spoilAtMinute = spoilAtMinute });
+
+            if (playerSurvival != null)
+                foreach ((string id, float value) in playerSurvival.EnumerateStats())
+                    data.stats.Add(new StatSaveData { id = id, value = value });
+
+            if (playerStatusEffects != null)
+                foreach ((string id, long untilMinute) in playerStatusEffects.EnumerateEffects())
+                    data.statusEffects.Add(new StatusEffectSaveData { id = id, untilMinute = untilMinute });
 
             foreach (string mapId in mapStateRegistry.MapIds)
             {

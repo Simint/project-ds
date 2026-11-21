@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Game.Inventory;
 using Game.Maps;
 using Game.Save;
+using Game.Survival;
 using Game.UI;
 using Game.World;
 using UnityEngine;
@@ -19,6 +20,8 @@ namespace Game.Core
         [SerializeField] private MapLoader mapLoader;
         [SerializeField] private TravelMenuUI travelMenu;
         [SerializeField] private PlayerInventory playerInventory;
+        [SerializeField] private PlayerSurvival playerSurvival;
+        [SerializeField] private PlayerStatusEffects playerStatusEffects;
         [SerializeField] private MapDatabase mapDatabase;
 
         private void Awake()
@@ -27,6 +30,8 @@ namespace Game.Core
             if (mapLoader == null) Debug.LogError("[GameBootstrap] mapLoader 참조가 비어 있습니다.", this);
             if (travelMenu == null) Debug.LogError("[GameBootstrap] travelMenu 참조가 비어 있습니다.", this);
             if (playerInventory == null) Debug.LogError("[GameBootstrap] playerInventory 참조가 비어 있습니다.", this);
+            if (playerSurvival == null) Debug.LogError("[GameBootstrap] playerSurvival 참조가 비어 있습니다.", this);
+            if (playerStatusEffects == null) Debug.LogError("[GameBootstrap] playerStatusEffects 참조가 비어 있습니다.", this);
             if (mapDatabase == null) Debug.LogError("[GameBootstrap] mapDatabase 참조가 비어 있습니다.", this);
 
             GameServices.RegisterWorldClock(worldClock);
@@ -50,10 +55,26 @@ namespace Game.Core
 
             if (playerInventory != null)
             {
-                var slots = new List<(string itemId, int count)>();
+                var slots = new List<(string itemId, int count, long spoilAtMinute)>();
                 foreach (InventorySlotData slot in save.inventorySlots)
-                    slots.Add((slot.itemId, slot.count));
+                    slots.Add((slot.itemId, slot.count, slot.spoilAtMinute));
                 playerInventory.RestoreSlots(slots);
+            }
+
+            if (playerSurvival != null)
+            {
+                var values = new List<(string id, float value)>();
+                foreach (StatSaveData stat in save.stats)
+                    values.Add((stat.id, stat.value));
+                playerSurvival.RestoreStats(values);
+            }
+
+            if (playerStatusEffects != null)
+            {
+                var effects = new List<(string id, long untilMinute)>();
+                foreach (StatusEffectSaveData effect in save.statusEffects)
+                    effects.Add((effect.id, effect.untilMinute));
+                playerStatusEffects.RestoreEffects(effects);
             }
 
             foreach (MapSaveData mapData in save.maps)

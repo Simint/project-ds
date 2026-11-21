@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Game.Core;
 using Game.Inventory;
 using Game.Items;
 using Game.Player;
@@ -8,8 +9,9 @@ using UnityEngine.UI;
 namespace Game.UI
 {
     /// <summary>
-    /// 가방 창 (Tab / 패드 Select, docs/design/GAME_DESIGN.md 7). 슬롯 목록과 총 무게를 보여준다.
-    /// 1단계 수준 단순 UI: 고르거나 옮기는 조작은 없다. 열려 있는 동안 플레이어 이동을 잠근다.
+    /// 가방 창 (Tab / 패드 Select, docs/design/GAME_DESIGN.md 7). 슬롯 목록과 총 무게를 보여주고,
+    /// 소비 아이템 항목을 누르면 그 슬롯을 바로 쓴다(7.1 "가방에서도 쓸 수 있다"). 열려 있는 동안
+    /// 플레이어 이동을 잠근다.
     /// </summary>
     public sealed class InventoryUI : MonoBehaviour
     {
@@ -20,6 +22,7 @@ namespace Game.UI
         [SerializeField] private PlayerInventory inventory;
         [SerializeField] private ItemDatabase itemDatabase;
         [SerializeField] private PlayerInputReader inputReader;
+        [SerializeField] private ItemUseController itemUseController;
 
         private readonly List<Text> spawnedEntries = new List<Text>();
 
@@ -44,6 +47,7 @@ namespace Game.UI
                 inputReader.ToggleInventoryPressed += HandleTogglePressed;
                 inputReader.UICancelPressed += HandleCancelPressed;
             }
+            if (inventory != null) inventory.Model.Changed += HandleModelChanged;
         }
 
         private void OnDisable()
@@ -53,6 +57,12 @@ namespace Game.UI
                 inputReader.ToggleInventoryPressed -= HandleTogglePressed;
                 inputReader.UICancelPressed -= HandleCancelPressed;
             }
+            if (inventory != null) inventory.Model.Changed -= HandleModelChanged;
+        }
+
+        private void HandleModelChanged()
+        {
+            if (panelRoot != null && panelRoot.activeSelf) Refresh();
         }
 
         private void HandleTogglePressed()
@@ -86,13 +96,30 @@ namespace Game.UI
                 if (entry != null) Destroy(entry.gameObject);
             spawnedEntries.Clear();
 
-            foreach ((string itemId, int count) in inventory.EnumerateSlots())
+            long now = GameServices.WorldClock != null ? GameServices.WorldClock.TotalMinutes : 0;
+            IReadOnlyList<InventorySlot> slots = inventory.Model.Slots;
+            for (int i = 0; i < slots.Count; i++)
             {
-                ItemDefinition def = itemDatabase != null ? itemDatabase.Find(itemId) : null;
-                string name = def != null ? def.DisplayName : itemId;
+                InventorySlot slot = slots[i];
+                if (slot == null || slot.IsEmpty) continue;
+
+                ItemDefinition def = itemDatabase != null ? itemDatabase.Find(slot.ItemId) : null;
+                string name = def != null ? def.DisplayName : slot.ItemId;
+                bool spoiled = slot.IsSpoiled(now);
+                if (spoiled) name += " (상함)";
+
                 Text entry = Instantiate(entryTemplate, listParent);
                 entry.gameObject.SetActive(true);
-                entry.text = $"{name} x{count}";
+                entry.text = $"{name} x{slot.Count}";
+                entry.color = spoiled ? Color.red : Color.white;
+
+                if (def != null && def.IsConsumable && itemUseController != null)
+                {
+                    int slotIndex = i;
+                    Button button = entry.GetComponent<Button>();
+                    if (button != null) button.onClick.AddListener(() => itemUseController.UseSlot(slotIndex));
+                }
+
                 spawnedEntries.Add(entry);
             }
 

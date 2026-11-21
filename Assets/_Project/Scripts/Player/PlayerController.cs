@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Game.Core;
 using UnityEngine;
 
@@ -21,6 +22,12 @@ namespace Game.Player
         private readonly IPlayerMotionState jumpingState = new JumpingMotionState();
         private readonly IPlayerMotionState fallingState = new FallingMotionState();
 
+        // 출처(골절, 무게 등)별 이동·점프 배율. 모두 곱해서 쓴다 (add-survival-stat/상태 이상 연결용 자리,
+        // ARCHITECTURE.md 4.2). Update가 아니라 상태 이상이 걸리거나 풀릴 때만 바뀌므로 매 프레임
+        // Dictionary.Values를 도는 것도 할당이 없어 허용한다.
+        private readonly Dictionary<string, float> speedMultipliers = new Dictionary<string, float>();
+        private readonly Dictionary<string, float> jumpMultipliers = new Dictionary<string, float>();
+
         private Rigidbody2D body;
         private IPlayerMotionState currentState;
         private float coyoteTimer;
@@ -34,6 +41,12 @@ namespace Game.Player
 
         internal IPlayerMotionState GroundedState => groundedState;
         internal IPlayerMotionState FallingState => fallingState;
+
+        public float SpeedMultiplier => Multiply(speedMultipliers);
+        public float JumpMultiplier => Multiply(jumpMultipliers);
+
+        /// <summary>낙하가 끝나 땅에 닿을 때마다 (떨어진 거리, 타일 단위)를 발행한다. FallDamage가 구독한다.</summary>
+        public event System.Action<float> Landed;
 
         private void Awake()
         {
@@ -79,7 +92,7 @@ namespace Game.Player
             {
                 jumpBufferTimer = 0f;
                 coyoteTimer = 0f;
-                body.linearVelocity = new Vector2(body.linearVelocity.x, settings.JumpVelocity);
+                body.linearVelocity = new Vector2(body.linearVelocity.x, settings.JumpVelocity * JumpMultiplier);
                 ChangeState(jumpingState);
             }
 
@@ -105,6 +118,21 @@ namespace Game.Player
         {
             currentState = next;
             currentState.Enter(this);
+        }
+
+        /// <summary>출처별 수평 이동 배율. 골절 상태 이상 등이 등록·해제한다 (상태가 바뀔 때만 호출).</summary>
+        public void SetSpeedMultiplier(string sourceKey, float multiplier) => speedMultipliers[sourceKey] = multiplier;
+        public void ClearSpeedMultiplier(string sourceKey) => speedMultipliers.Remove(sourceKey);
+        public void SetJumpMultiplier(string sourceKey, float multiplier) => jumpMultipliers[sourceKey] = multiplier;
+        public void ClearJumpMultiplier(string sourceKey) => jumpMultipliers.Remove(sourceKey);
+
+        internal void RaiseLanded(float fallDistanceTiles) => Landed?.Invoke(fallDistanceTiles);
+
+        private static float Multiply(Dictionary<string, float> multipliers)
+        {
+            float result = 1f;
+            foreach (float value in multipliers.Values) result *= value;
+            return result;
         }
 
         private void HandleJumpPressed()

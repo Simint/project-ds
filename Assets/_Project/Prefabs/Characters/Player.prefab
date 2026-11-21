@@ -16,6 +16,12 @@ GameObject:
   - component: {fileID: 7050079904660406002}
   - component: {fileID: 963269600960441317}
   - component: {fileID: 5480470572356274239}
+  - component: {fileID: 7323652339077693437}
+  - component: {fileID: 1446359830437764462}
+  - component: {fileID: 3876148393267091966}
+  - component: {fileID: 5617280217298151973}
+  - component: {fileID: 8108732798405090114}
+  - component: {fileID: 4780457631349387534}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -180,6 +186,102 @@ MonoBehaviour:
   pickupPrefab: {fileID: 8657213249867274546, guid: f3e402e4e159b1d40972f2ccf3813b2b, type: 3}
   slotCount: 20
   weightLimit: 50
+--- !u!114 &7323652339077693437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa09f7b31f7b7d0499257b51192bad8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Survival.PlayerSurvival
+  database: {fileID: 11400000, guid: 7660a67d229ae014e859153e437c0179, type: 2}
+  settings: {fileID: 11400000, guid: 1156fefb156d3e04592766f9ed998ba2, type: 2}
+  hands: {fileID: 7050079904660406002}
+  inputReader: {fileID: 4376654180812441932}
+  statusEffects: {fileID: 1446359830437764462}
+--- !u!114 &1446359830437764462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90dbebb50a631114da1a816488f61eb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Survival.PlayerStatusEffects
+  database: {fileID: 11400000, guid: 2ace54d4686b22f4bb88f4a3866a39b2, type: 2}
+  controller: {fileID: 963269600960441317}
+  survival: {fileID: 7323652339077693437}
+--- !u!114 &3876148393267091966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8a0d41c5a2dab24ebed3538eb086552, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Survival.FallDamage
+  controller: {fileID: 963269600960441317}
+  settings: {fileID: 11400000, guid: 1156fefb156d3e04592766f9ed998ba2, type: 2}
+  survival: {fileID: 7323652339077693437}
+  statusEffects: {fileID: 1446359830437764462}
+--- !u!114 &5617280217298151973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a294dfc830b1cd4a99e9caa79994c47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Survival.PlayerDeath
+  survival: {fileID: 7323652339077693437}
+  hubMap: {fileID: 11400000, guid: d6e08b5caacd9cc45aee423372407a8a, type: 2}
+  hubSpawnPointId: 
+--- !u!114 &8108732798405090114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d163951d418b84a46bb04cb6d5528421, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.HotbarSelector
+  inputReader: {fileID: 4376654180812441932}
+  slotCount: 10
+--- !u!114 &4780457631349387534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85d90fbfe30482c42952f0f797753ed8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Inventory.ItemUseController
+  inputReader: {fileID: 4376654180812441932}
+  hotbar: {fileID: 8108732798405090114}
+  inventory: {fileID: 5480470572356274239}
+  hands: {fileID: 7050079904660406002}
+  itemDatabase: {fileID: 11400000, guid: e74f8465c2deb924e81ce52fbbafd73e, type: 2}
+  survival: {fileID: 7323652339077693437}
+  statusEffects: {fileID: 1446359830437764462}
 --- !u!1 &7658787558271473459
 GameObject:
   m_ObjectHideFlags: 0

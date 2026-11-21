@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17fb55ea20b27e84687b40626e6a29fa, type: 3}
+  m_Name: SurvivalSettings
+  m_EditorClassIdentifier: Game.Runtime::Game.Survival.SurvivalSettings
+  hpDrainPerHourWhenStarving: -4
+  hpDrainPerHourWhenCold: -4
+  hpRegenPerHourWhenHealthy: 2
+  hpRegenMinHunger: 50
+  hpRegenMinThirst: 50
+  reviveHpFraction: 0.5
+  staminaDrainPerSecondRun: 8
+  staminaDrainPerSecondBeastRun: 12
+  staminaRegenPerSecond: 10
+  sicknessStaminaRegenMultiplier: 0.5
+  beastHandHungerMultiplier: 1.5
+  nightOutdoorTemperatureDropPerHour: -8
+  nightStartHour: 20
+  nightEndHour: 6
+  fallDamageThresholdTiles: 4
+  fallDamagePerExcessTile: 5
+  fractureFallThresholdTiles: 8
+  dirtyWaterSicknessChance: 0.3
+  dirtyWaterThirstRestore: 30

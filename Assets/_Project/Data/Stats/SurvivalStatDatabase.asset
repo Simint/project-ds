@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f09d1a6ff727dc4097c842d2261db43, type: 3}
+  m_Name: SurvivalStatDatabase
+  m_EditorClassIdentifier: Game.Runtime::Game.Survival.SurvivalStatDatabase
+  stats:
+  - {fileID: 11400000, guid: 082a13110b072fc4ebee3336f06d5024, type: 2}
+  - {fileID: 11400000, guid: 50b2aa4ad59aa68468a291f2a8bc48ea, type: 2}
+  - {fileID: 11400000, guid: ff647cbdb826c584eb1865dfb7a7c81b, type: 2}
+  - {fileID: 11400000, guid: 7fe92082e60906240ab96fafdf017015, type: 2}
+  - {fileID: 11400000, guid: c19c29f46d598d2439cbc87a3602f6d4, type: 2}
