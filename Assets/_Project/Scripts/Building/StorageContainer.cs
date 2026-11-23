@@ -64,10 +64,10 @@ namespace Game.Building
             return removed;
         }
 
-        public IEnumerable<(string itemId, int count)> EnumerateSlots()
+        public IEnumerable<(string itemId, int count, long spoilAtMinute, int durability)> EnumerateSlots()
         {
             foreach (InventorySlot slot in Model.Slots)
-                if (slot != null && !slot.IsEmpty) yield return (slot.ItemId, slot.Count);
+                if (slot != null && !slot.IsEmpty) yield return (slot.ItemId, slot.Count, slot.SpoilAtMinute, slot.Durability);
         }
 
         /// <summary>업그레이드로 칸을 늘릴 자리 — 지금은 아무도 부르지 않는다 (MVP 5단계 범위 밖).</summary>
@@ -93,7 +93,10 @@ namespace Game.Building
                     {
                         ItemDefinition def = itemDatabase != null ? itemDatabase.Find(slot.itemId) : null;
                         if (def == null) continue;
-                        built.TryAdd(slot.itemId, slot.count, def.EffectiveMaxStackSize, def.Weight, slot.spoilAtMinute, slot.durability);
+                        if (slot.slotIndex >= 0 && slot.slotIndex < built.SlotCount)
+                            built.SetSlotExact(slot.slotIndex, slot.itemId, slot.count, def.EffectiveMaxStackSize, def.Weight, slot.spoilAtMinute, slot.durability);
+                        else
+                            built.TryAdd(slot.itemId, slot.count, def.EffectiveMaxStackSize, def.Weight, slot.spoilAtMinute, slot.durability);
                     }
                 }
             }
@@ -109,15 +112,18 @@ namespace Game.Building
         {
             if (structureInstance == null || model == null) return;
             var data = new StorageContentsData();
-            foreach (InventorySlot slot in model.Slots)
+            IReadOnlyList<InventorySlot> slots = model.Slots;
+            for (int i = 0; i < slots.Count; i++)
             {
+                InventorySlot slot = slots[i];
                 if (slot == null || slot.IsEmpty) continue;
                 data.slots.Add(new InventorySlotData
                 {
                     itemId = slot.ItemId,
                     count = slot.Count,
                     spoilAtMinute = slot.SpoilAtMinute,
-                    durability = slot.Durability
+                    durability = slot.Durability,
+                    slotIndex = i
                 });
             }
             structureInstance.Extra = JsonUtility.ToJson(data);

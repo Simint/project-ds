@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,7 +8,7 @@ namespace Game.Player
     /// <summary>
     /// Controls.inputactions를 읽어 이동·점프·달리기·손 전환·상호작용·메뉴 입력을 내보낸다. 게임플레이
     /// 코드는 Input System을 직접 만지지 않고 이 컴포넌트가 주는 값만 쓴다 (ARCHITECTURE.md 2.2, 4.2).
-    /// 맵 이동·지역 선택 창이 열린 동안은 SetLocked(true)로 이동·점프·손 전환·상호작용을 멈춘다
+    /// 맵 이동·지역 선택 창이 열린 동안은 SetLocked(source, true)로 이동·점프·손 전환·상호작용을 멈춘다
     /// (ARCHITECTURE.md 3.3). UI 탐색(UINavigate/UISubmit/UICancel)은 메뉴 전용이라 잠금의 영향을 받지
     /// 않는다 (잠긴 동안에도 메뉴를 조작할 수 있어야 하므로).
     /// </summary>
@@ -41,7 +42,10 @@ namespace Game.Player
         // (람다를 매번 새로 만들면 해제할 수 없다, .claude/rules/csharp.md) Awake에서 한 번 만들어 둔다.
         private Action<InputAction.CallbackContext>[] hotbarSlotHandlers;
 
-        private bool locked;
+        // 잠금을 하나의 bool로 두면, 두 UI가 동시에 잠그고 있을 때 한쪽이 풀면 다른 쪽 것까지 같이
+        // 풀려 버린다(예: 건설 모드가 잠근 상태에서 상점 UI가 열려 잠그고 닫으면 건설 모드까지 풀림).
+        // 잠근 쪽(this로 넘기는 호출자)마다 따로 기억하는 집합으로 바꿔 출처별로 독립시킨다.
+        private readonly HashSet<object> lockSources = new HashSet<object>();
 
         public Vector2 MoveInput { get; private set; }
         public bool RunHeld { get; private set; }
@@ -58,7 +62,7 @@ namespace Game.Player
         /// <summary>마우스 포인터의 월드 좌표 (건설 모드 커서용). Keyboard&amp;Mouse가 아니면 의미 없다.</summary>
         public Vector2 PointerWorldPosition { get; private set; }
 
-        public bool IsLocked => locked;
+        public bool IsLocked => lockSources.Count > 0;
 
         /// <summary>마지막으로 입력을 보낸 장치의 컨트롤 스킴 ("Keyboard&Mouse" 또는 "Gamepad"). 상호작용
         /// 안내의 키 표시를 여기에 맞춘다.</summary>
@@ -126,7 +130,7 @@ namespace Game.Player
                 string actionName = i == 9 ? "Hotbar0" : $"Hotbar{i + 1}";
                 hotbarSlotActions[i] = map.FindAction(actionName, throwIfNotFound: true);
                 int index = i;
-                hotbarSlotHandlers[i] = _ => { if (!locked) HotbarSlotSelected?.Invoke(index); };
+                hotbarSlotHandlers[i] = _ => { if (!IsLocked) HotbarSlotSelected?.Invoke(index); };
             }
         }
 
@@ -221,11 +225,12 @@ namespace Game.Player
         private void Update()
         {
             if (moveAction == null) return;
-            MoveInput = locked ? Vector2.zero : moveAction.ReadValue<Vector2>();
-            RunHeld = !locked && runAction.IsPressed();
-            InteractHeld = !locked && interactAction.IsPressed();
+            bool isLocked = IsLocked;
+            MoveInput = isLocked ? Vector2.zero : moveAction.ReadValue<Vector2>();
+            RunHeld = !isLocked && runAction.IsPressed();
+            InteractHeld = !isLocked && interactAction.IsPressed();
             UINavigateInput = uiNavigateAction.ReadValue<float>();
-            HotbarScrollInput = locked ? 0f : hotbarScrollAction.ReadValue<float>();
+            HotbarScrollInput = isLocked ? 0f : hotbarScrollAction.ReadValue<float>();
             BuildCursorMoveInput = buildCursorMoveAction.ReadValue<Vector2>();
             if (mainCamera != null)
             {
@@ -238,16 +243,33 @@ namespace Game.Player
             else if (Keyboard.current != null && Keyboard.current.wasUpdatedThisFrame) ActiveControlScheme = "Keyboard&Mouse";
         }
 
-        /// <summary>맵 이동(페이드)·지역 선택 창이 열린 동안 이동·점프·손 전환·상호작용을 멈춘다.</summary>
-        public void SetLocked(bool value)
+        /// <summary>맵 이동(페이드)·지역 선택 창 등이 열린 동안 이동·점프·손 전환·상호작용을 멈춘다.
+        /// source는 잠근 쪽 자신(보통 this)을 넘긴다 — 그래야 서로 다른 UI가 동시에 잠궈도 한쪽이
+        /// 풀 때 다른 쪽 잠금까지 같이 풀리지 않는다.</summary>
+        public void SetLocked(object source, bool value)
         {
-            locked = value;
-            if (locked)
+            if (source == null) return;
+            if (value) lockSources.Add(source);
+            else lockSources.Remove(source);
+
+            if (IsLocked)
             {
                 MoveInput = Vector2.zero;
                 RunHeld = false;
                 InteractHeld = false;
             }
+        }
+
+        /// <summary>자기 자신(source)이 아닌 다른 출처가 지금 잠그고 있는지. Tab(가방)·B(건설 모드)처럼
+        /// 스스로 잠금을 거는 토글 입력이, 자기 잠금 때문에 자기 토글이 막히지 않으면서도 다른 UI가 열려
+        /// 있을 때는 거부할 수 있게 한다.</summary>
+        public bool IsLockedByOthers(object source)
+        {
+            if (lockSources.Count == 0) return false;
+            if (source == null) return true;
+            foreach (object held in lockSources)
+                if (held != source) return true;
+            return false;
         }
 
         /// <summary>현재 장치에서 상호작용 키의 표시 문자열 ("E", "X" 등). 안내 UI가 쓴다.</summary>
@@ -259,45 +281,49 @@ namespace Game.Player
 
         private void HandleJumpPerformed(InputAction.CallbackContext context)
         {
-            if (!locked) JumpPressed?.Invoke();
+            if (!IsLocked) JumpPressed?.Invoke();
         }
 
         private void HandleJumpCanceled(InputAction.CallbackContext context)
         {
-            if (!locked) JumpReleased?.Invoke();
+            if (!IsLocked) JumpReleased?.Invoke();
         }
 
         private void HandleSwitchHandPerformed(InputAction.CallbackContext context)
         {
-            if (!locked) SwitchHandPressed?.Invoke();
+            if (!IsLocked) SwitchHandPressed?.Invoke();
         }
 
         private void HandleInteractPerformed(InputAction.CallbackContext context)
         {
-            if (!locked) InteractPressed?.Invoke();
+            if (!IsLocked) InteractPressed?.Invoke();
         }
 
         private void HandleInteractCanceled(InputAction.CallbackContext context)
         {
-            if (!locked) InteractReleased?.Invoke();
+            if (!IsLocked) InteractReleased?.Invoke();
         }
 
+        /// <summary>가방 자신이 잠금을 걸기 때문에(Tab으로 열면 그 뒤로 잠겨서) ToggleBuildMode/UICancel과
+        /// 같은 이유로 잠금과 무관하게 항상 발행한다 — 안 그러면 Tab으로 연 가방을 Tab으로 못 닫는다.
+        /// 다른 UI가 잠근 동안 Tab으로 가방이 열리면 안 되는 건 받는 쪽(InventoryUI)이
+        /// IsLockedByOthers로 직접 막는다.</summary>
         private void HandleToggleInventoryPerformed(InputAction.CallbackContext context)
         {
-            if (!locked) ToggleInventoryPressed?.Invoke();
+            ToggleInventoryPressed?.Invoke();
         }
 
         private void HandleHotbarNextPerformed(InputAction.CallbackContext context)
         {
-            if (!locked) HotbarNextPressed?.Invoke();
+            if (!IsLocked) HotbarNextPressed?.Invoke();
         }
 
         private void HandleHotbarPrevPerformed(InputAction.CallbackContext context)
         {
-            if (!locked) HotbarPrevPressed?.Invoke();
+            if (!IsLocked) HotbarPrevPressed?.Invoke();
         }
 
-        /// <summary>가방(Tab)이 열려 있는 동안에도 아이템을 쓸 수 있어야 해서 locked의 영향을 받지 않는다
+        /// <summary>가방이 열려 있어도 아이템을 쓸 수 있어야 해서 잠금의 영향을 받지 않는다
         /// (UISubmit/UICancel과 같은 예외, docs/design/GAME_DESIGN.md 7).</summary>
         private void HandleUseItemPerformed(InputAction.CallbackContext context)
         {

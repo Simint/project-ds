@@ -5,6 +5,7 @@ using Game.Crafting;
 using Game.Inventory;
 using Game.Player;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Game.Building
 {
@@ -21,6 +22,7 @@ namespace Game.Building
         [SerializeField] private BuildSettings settings;
 
         private readonly Dictionary<StructureDefinition, Sprite> previewSpriteCache = new Dictionary<StructureDefinition, Sprite>();
+        private readonly Dictionary<StructureDefinition, Vector3> previewOffsetCache = new Dictionary<StructureDefinition, Vector3>();
 
         // 은신처 씬 오브젝트가 Boot 씬의 플레이어를 계속 참조해야 해서(한 번뿐인 interactor 매개변수로는
         // 안 됨) 직렬화 참조 대신 GameServices를 거친다 — 두 씬이 같이 열려 있어야만 성립하는 크로스 씬
@@ -99,8 +101,11 @@ namespace Game.Building
 
         private void HandleTogglePressed()
         {
-            if (IsActive) Deactivate();
-            else Activate();
+            if (IsActive) { Deactivate(); return; }
+            // 다른 UI가 잠궈 둔 동안이거나(상점·제작대 등 열린 채) 이동 입력을 누르고 있는 동안은
+            // 건설 모드로 들어가지 않는다 — 걷다가 갑자기 커서 모드로 바뀌는 걸 막는다.
+            if (inputReader != null && (inputReader.IsLockedByOthers(this) || inputReader.MoveInput.sqrMagnitude > 0.01f)) return;
+            Activate();
         }
 
         private void Activate()
@@ -108,7 +113,7 @@ namespace Game.Building
             if (buildGrid == null) return;
             IsActive = true;
             cursorWorldPosition = transform.position;
-            inputReader?.SetLocked(true);
+            inputReader?.SetLocked(this, true);
             if (SelectedDefinition == null && Options.Count > 0) SelectDefinition(Options[0]);
             ActiveChanged?.Invoke(true);
         }
@@ -116,7 +121,7 @@ namespace Game.Building
         private void Deactivate()
         {
             IsActive = false;
-            inputReader?.SetLocked(false);
+            inputReader?.SetLocked(this, false);
             preview?.Hide();
             ActiveChanged?.Invoke(false);
         }
@@ -128,20 +133,38 @@ namespace Game.Building
 
             Vector2Int cell = buildGrid.WorldToCell(cursorWorldPosition);
             bool canPlace = buildGrid.CanPlace(SelectedDefinition, cell);
-            preview.Refresh(GetPreviewSprite(SelectedDefinition), buildGrid.CellToWorld(cell), canPlace);
+            preview.Refresh(GetPreviewSprite(SelectedDefinition), buildGrid.CellToWorld(cell), GetPreviewOffset(SelectedDefinition), canPlace);
         }
 
         private Sprite GetPreviewSprite(StructureDefinition definition)
         {
             if (previewSpriteCache.TryGetValue(definition, out Sprite sprite)) return sprite;
-            sprite = definition.Prefab != null ? definition.Prefab.GetComponentInChildren<SpriteRenderer>()?.sprite : null;
+            SpriteRenderer renderer = definition.Prefab != null ? definition.Prefab.GetComponentInChildren<SpriteRenderer>() : null;
+            sprite = renderer != null ? renderer.sprite : null;
             previewSpriteCache[definition] = sprite;
             return sprite;
         }
 
+        /// <summary>프리팹의 Visual 자식이 루트에서 떨어진 로컬 오프셋(add-structure 스킬 1절). 미리보기가
+        /// 실제 설치 위치와 어긋나지 않도록 PlacementPreview.Refresh에 같이 넘긴다.</summary>
+        private Vector3 GetPreviewOffset(StructureDefinition definition)
+        {
+            if (previewOffsetCache.TryGetValue(definition, out Vector3 offset)) return offset;
+            SpriteRenderer renderer = definition.Prefab != null ? definition.Prefab.GetComponentInChildren<SpriteRenderer>() : null;
+            offset = renderer != null ? renderer.transform.localPosition : Vector3.zero;
+            previewOffsetCache[definition] = offset;
+            return offset;
+        }
+
+        /// <summary>마우스로 건설 메뉴 버튼(BuildMenuUI)을 누른 그 클릭이 그 아래 월드에도 같이 먹어
+        /// 설치·철거되지 않게 한다. 패드는 포인터가 없으니 검사하지 않는다.</summary>
+        private bool IsPointerOverUI() =>
+            inputReader != null && inputReader.ActiveControlScheme == "Keyboard&Mouse"
+            && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+
         private void HandlePlacePressed()
         {
-            if (!IsActive || SelectedDefinition == null || buildGrid == null) return;
+            if (!IsActive || SelectedDefinition == null || buildGrid == null || IsPointerOverUI()) return;
 
             Vector2Int cell = buildGrid.WorldToCell(cursorWorldPosition);
             if (!buildGrid.CanPlace(SelectedDefinition, cell)) return;
@@ -154,7 +177,7 @@ namespace Game.Building
 
         private void HandleDemolishPressed()
         {
-            if (!IsActive || buildGrid == null) return;
+            if (!IsActive || buildGrid == null || IsPointerOverUI()) return;
 
             Vector2Int cell = buildGrid.WorldToCell(cursorWorldPosition);
             StructureInstance instance = buildGrid.GetAt(cell);
@@ -176,8 +199,8 @@ namespace Game.Building
             if (instance.Definition.Station != StationKind.Storage) return;
             StorageContainer storage = instance.GetComponent<StorageContainer>();
             if (storage == null) return;
-            foreach ((string itemId, int count) in storage.EnumerateSlots())
-                playerInventory.Collect(itemId, count);
+            foreach ((string itemId, int count, long spoilAtMinute, int durability) in storage.EnumerateSlots())
+                playerInventory.CollectWithState(itemId, count, spoilAtMinute, durability);
         }
     }
 }

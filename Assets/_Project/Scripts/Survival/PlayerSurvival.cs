@@ -75,9 +75,11 @@ namespace Game.Survival
             if (stamina == null) return;
 
             bool wantsRun = inputReader != null && inputReader.RunHeld;
+            // 가만히 서서 달리기 키만 누르고 있으면 소모하지 않는다 — 실제로 움직이고 있을 때만 깎는다.
+            bool isMoving = inputReader != null && inputReader.MoveInput.sqrMagnitude > 0.0001f;
             bool beast = hands != null && hands.Mode == HandMode.Beast;
             float before = stamina.Value;
-            if (wantsRun && !stamina.IsAtMin)
+            if (wantsRun && isMoving && !stamina.IsAtMin)
             {
                 float drain = beast ? settings.StaminaDrainPerSecondBeastRun : settings.StaminaDrainPerSecondRun;
                 stamina.Add(-drain * Time.deltaTime);
@@ -157,9 +159,16 @@ namespace Game.Survival
             RefreshTemperatureModifier();
         }
 
+        /// <summary>잠자기·먼 지역 이동처럼 한 번에 몇 시간씩 건너뛸 때, 그 시간을 통째로 한 번에
+        /// 계산하지 않고 1시간 단위로 잘라서 돈다 — 그래야 허기·갈증이 중간에 0을 지나는 시점부터
+        /// 정확히 "굶는 상태"로 HP가 깎인다(통째로 계산하면 마지막 상태만 보고 전체 시간에 그 규칙을
+        /// 적용해 버린다).</summary>
         private void HandleAdvanced(long minutes)
         {
-            TickGameTime(minutes / 60f);
+            long wholeHours = minutes / 60;
+            long remainderMinutes = minutes % 60;
+            for (long i = 0; i < wholeHours; i++) TickGameTime(1f);
+            if (remainderMinutes > 0) TickGameTime(remainderMinutes / 60f);
             RefreshTemperatureModifier();
         }
 
@@ -200,6 +209,17 @@ namespace Game.Survival
                 hp.Add(delta * gameHours);
                 Stats.NotifyChanged();
             }
+
+            CheckDeath();
+        }
+
+        /// <summary>HP가 0인지 지금 바로 확인해서 "막 0이 된 전이"에서만 한 번 Died를 쏜다. 시계 틱
+        /// (ApplyHealthRule)뿐 아니라 FallDamage처럼 HP를 바로 깎는 곳도 그 직후 이걸 불러야 한다 —
+        /// 다음 분이 지날 때까지 사망 판정이 늦어지면 안 된다.</summary>
+        public void CheckDeath()
+        {
+            SurvivalStat hp = Stats.Get(StatIds.Hp);
+            if (hp == null) return;
 
             // hp.IsAtMin은 레벨 조건이라 0에 머무는 동안 매번 참이 된다. "막 0이 된 전이"에서만 한 번 발행한다.
             if (hp.IsAtMin)

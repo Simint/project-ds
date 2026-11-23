@@ -1,3 +1,4 @@
+using System;
 using Game.Building;
 using Game.Core;
 using Game.Player;
@@ -25,6 +26,7 @@ namespace Game.UI
         [SerializeField] private PlayerInputReader inputReader;
 
         private PlayerSurvival survival;
+        private int openedFrame = -1;
 
         private void Awake()
         {
@@ -48,7 +50,11 @@ namespace Game.UI
 
         private void OnDisable()
         {
-            if (inputReader != null) inputReader.UICancelPressed -= HandleCancelPressed;
+            if (inputReader != null)
+            {
+                inputReader.UICancelPressed -= HandleCancelPressed;
+                inputReader.SetLocked(this, false); // 열려 있는 채로 비활성화돼도 잠금이 영원히 남지 않게 한다
+            }
             shortSleepButton?.onClick.RemoveListener(HandleShortSleepClicked);
             mediumSleepButton?.onClick.RemoveListener(HandleMediumSleepClicked);
             longSleepButton?.onClick.RemoveListener(HandleLongSleepClicked);
@@ -66,19 +72,24 @@ namespace Game.UI
             if (warningText != null) warningText.gameObject.SetActive(!canSleep);
 
             panelRoot.SetActive(true);
-            inputReader?.SetLocked(true);
+            openedFrame = Time.frameCount;
+            inputReader?.SetLocked(this, true);
         }
 
         private void Hide()
         {
             if (panelRoot != null) panelRoot.SetActive(false);
-            inputReader?.SetLocked(false);
+            inputReader?.SetLocked(this, false);
             survival = null;
         }
 
         private void HandleCancelPressed()
         {
-            if (panelRoot != null && panelRoot.activeSelf) Hide();
+            if (panelRoot == null || !panelRoot.activeSelf) return;
+            // Interact(패드 East)와 같은 물리 버튼이라, 창을 연 바로 그 입력에 바로 닫히는 걸 막는다
+            // (TravelMenuUI와 같은 이유).
+            if (Time.frameCount == openedFrame) return;
+            Hide();
         }
 
         private bool CanSleepAtAll()
@@ -98,14 +109,14 @@ namespace Game.UI
         {
             if (survival == null || !CanSleepAtAll()) { Hide(); return; }
 
-            int actualHours = ClampToAvoidStarvation(requestedHours);
-            if (actualHours <= 0) { Hide(); return; }
+            long actualMinutes = ClampToAvoidStarvation(requestedHours * 60L);
+            if (actualMinutes <= 0) { Hide(); return; }
 
             survival.Stats.SetModifier(SleepSource, StatIds.Hunger, StatModifier.Multiply(settings.HungerThirstDrainMultiplier));
             survival.Stats.SetModifier(SleepSource, StatIds.Thirst, StatModifier.Multiply(settings.HungerThirstDrainMultiplier));
             survival.SetHpRegenMultiplier(SleepSource, settings.HpRegenMultiplier);
 
-            GameServices.WorldClock?.Advance(actualHours * 60);
+            GameServices.WorldClock?.Advance(actualMinutes);
 
             survival.Stats.ClearModifier(SleepSource, StatIds.Hunger);
             survival.Stats.ClearModifier(SleepSource, StatIds.Thirst);
@@ -115,28 +126,32 @@ namespace Game.UI
             Hide();
         }
 
-        /// <summary>요청한 시간 동안 자면 허기·갈증이 0 밑으로 떨어질 것 같으면, 0이 되는 시점까지만
-        /// 재운다(=중간에 깬 것으로 취급).</summary>
-        private int ClampToAvoidStarvation(int requestedHours)
+        /// <summary>요청한 시간 동안 자면 허기·갈증이 0 밑으로 떨어질 것 같으면, 0이 되는 시점(1분
+        /// 여유를 둔 그 직전)까지만 재운다(=중간에 깬 것으로 취급). 시간 단위가 아니라 분 단위로 계산해서,
+        /// "정확히 몇 시간" 단위로만 끊어 재우느라 실제로 잘 수 있는 시간보다 덜 자는 경우를 줄인다.</summary>
+        private long ClampToAvoidStarvation(long requestedMinutes)
         {
             survival.Stats.SetModifier(SleepSource, StatIds.Hunger, StatModifier.Multiply(settings.HungerThirstDrainMultiplier));
             survival.Stats.SetModifier(SleepSource, StatIds.Thirst, StatModifier.Multiply(settings.HungerThirstDrainMultiplier));
 
-            int maxHours = Mathf.Min(requestedHours, HoursUntilZero(StatIds.Hunger));
-            maxHours = Mathf.Min(maxHours, HoursUntilZero(StatIds.Thirst));
+            long maxMinutes = Math.Min(requestedMinutes, MinutesUntilZero(StatIds.Hunger));
+            maxMinutes = Math.Min(maxMinutes, MinutesUntilZero(StatIds.Thirst));
 
             survival.Stats.ClearModifier(SleepSource, StatIds.Hunger);
             survival.Stats.ClearModifier(SleepSource, StatIds.Thirst);
-            return Mathf.Max(0, maxHours);
+            return Math.Max(0, maxMinutes);
         }
 
-        private int HoursUntilZero(string statId)
+        /// <summary>그 스탯이 0에 닿기까지 남은 분. 1분을 미리 빼서, 오차로 정확히 0에 닿는 그 분에
+        /// 걸치는 일이 없게 한다.</summary>
+        private long MinutesUntilZero(string statId)
         {
             SurvivalStat stat = survival.Stats.Get(statId);
-            if (stat == null) return int.MaxValue;
-            float rate = survival.Stats.EffectiveRatePerHour(statId);
-            if (rate >= 0f) return int.MaxValue;
-            return Mathf.FloorToInt(stat.Value / -rate);
+            if (stat == null) return long.MaxValue;
+            float ratePerHour = survival.Stats.EffectiveRatePerHour(statId);
+            if (ratePerHour >= 0f) return long.MaxValue;
+            long minutes = (long)(stat.Value / -ratePerHour * 60f) - 1;
+            return Math.Max(0, minutes);
         }
     }
 }

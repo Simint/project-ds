@@ -56,13 +56,20 @@ namespace Game.Harvesting
             DamageHeldToolIfUsed(interactor);
 
             long nowMinute = GameServices.WorldClock != null ? GameServices.WorldClock.TotalMinutes : 0;
-            SetDepleted(true, nowMinute);
+            long respawnAt = definition != null && definition.RespawnDays > 0
+                ? nowMinute + definition.RespawnDays * WorldClock.MinutesPerDay
+                : 0;
+            SetDepleted(true, respawnAt);
         }
 
-        /// <summary>도구로 캤으면(짐승 손이 아니라 사람 손으로, 맞는 도구를 들고) 그 도구의 내구도를 깎는다.</summary>
+        /// <summary>도구로 캤으면(짐승 손이 아니라 사람 손으로, 맞는 도구를 들고) 그 도구의 내구도를 깎는다.
+        /// 짐승 손으로는 도구를 쓸 수 없으므로(맨손 채집으로 친다) 사람 손일 때만 깎는다.</summary>
         private void DamageHeldToolIfUsed(GameObject interactor)
         {
             if (definition.RequiredToolKind == ToolKind.None || definition.ToolDurabilityCostPerUse <= 0) return;
+            PlayerHands hands = interactor != null ? interactor.GetComponentInParent<PlayerHands>() : null;
+            if (hands != null && hands.Mode != HandMode.Human) return;
+
             PlayerHeldItem heldItem = interactor != null ? interactor.GetComponentInParent<PlayerHeldItem>() : null;
             if (heldItem == null) return;
 
@@ -91,16 +98,19 @@ namespace Game.Harvesting
                 return;
             }
 
+            // record.UntilMinute은 이미 계산이 끝난 "리스폰될 시각"이다. 아직 리스폰 전이면 그 값을 그대로
+            // 쓴다 — SetDepleted에 nowMinute로 넘기면 거기서 또 RespawnDays를 더해 주기가 두 배로 늘어난다.
             bool respawnReady = definition != null && definition.RespawnDays > 0 && nowMinute >= record.UntilMinute;
             SetDepleted(!respawnReady, respawnReady ? 0 : record.UntilMinute);
         }
 
-        private void SetDepleted(bool value, long nowMinute)
+        /// <summary>depleted 여부와 그 상태의 콜라이더·스프라이트만 바꾼다. respawnAt은 호출하는 쪽이
+        /// 이미 계산해서 넘긴다(인터랙트 시점엔 "지금 + 주기", 복원 시점엔 저장된 그 시각 그대로) — 여기서
+        /// 다시 계산하지 않는다.</summary>
+        private void SetDepleted(bool value, long respawnAt)
         {
             depleted = value;
-            respawnAtMinute = value && definition != null && definition.RespawnDays > 0
-                ? nowMinute + definition.RespawnDays * WorldClock.MinutesPerDay
-                : 0;
+            respawnAtMinute = value ? respawnAt : 0;
 
             if (visual != null) visual.enabled = !depleted;
             if (interactCollider != null) interactCollider.enabled = !depleted;

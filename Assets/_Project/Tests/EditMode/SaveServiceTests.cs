@@ -79,4 +79,54 @@ public sealed class SaveServiceTests
         Assert.AreEqual(1, loaded.statusEffects.Count);
         Assert.AreEqual("fracture", loaded.statusEffects[0].id);
     }
+
+    [Test]
+    public void Save_LeavesNoTempFileBehind()
+    {
+        var service = new SaveService(tempDir);
+        service.Save(new WorldSaveData { clockTotalMinutes = 1 });
+
+        Assert.IsTrue(File.Exists(Path.Combine(tempDir, "slot0.json")));
+        Assert.IsFalse(File.Exists(Path.Combine(tempDir, "slot0.json.tmp")));
+    }
+
+    [Test]
+    public void Save_Twice_ReplacesThePreviousFileCleanly()
+    {
+        var service = new SaveService(tempDir);
+        service.Save(new WorldSaveData { clockTotalMinutes = 1 });
+
+        service.Save(new WorldSaveData { clockTotalMinutes = 2 });
+
+        Assert.AreEqual(2, service.Load().clockTotalMinutes);
+    }
+
+    [Test]
+    public void Load_ReturnsNull_WhenFileIsCorruptedInsteadOfThrowing()
+    {
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "slot0.json"), "{ 이건 JSON이 아니다 ::: ");
+        var service = new SaveService(tempDir);
+
+        WorldSaveData loaded = service.Load();
+
+        Assert.IsNull(loaded);
+    }
+
+    [Test]
+    public void Load_OldFileWithoutSlotIndex_DefaultsSlotIndexToMinusOne()
+    {
+        // 버전 3 이전 저장 파일(InventorySlotData에 slotIndex 필드가 없던 시절)을 그대로 흉내 낸다.
+        Directory.CreateDirectory(tempDir);
+        string legacyJson = "{\"version\":2,\"inventorySlots\":[{\"itemId\":\"wood_log\",\"count\":3,\"spoilAtMinute\":0,\"durability\":-1}]}";
+        File.WriteAllText(Path.Combine(tempDir, "slot0.json"), legacyJson);
+        var service = new SaveService(tempDir);
+
+        WorldSaveData loaded = service.Load();
+
+        Assert.IsNotNull(loaded);
+        Assert.AreEqual(2, loaded.version);
+        Assert.AreEqual(1, loaded.inventorySlots.Count);
+        Assert.AreEqual(-1, loaded.inventorySlots[0].slotIndex);
+    }
 }

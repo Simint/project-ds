@@ -56,6 +56,7 @@ namespace Game.UI
             {
                 inputReader.ToggleInventoryPressed -= HandleTogglePressed;
                 inputReader.UICancelPressed -= HandleCancelPressed;
+                inputReader.SetLocked(this, false); // 열려 있는 채로 비활성화돼도 잠금이 영원히 남지 않게 한다
             }
             if (inventory != null) inventory.Model.Changed -= HandleModelChanged;
         }
@@ -67,8 +68,10 @@ namespace Game.UI
 
         private void HandleTogglePressed()
         {
-            if (panelRoot != null && panelRoot.activeSelf) Hide();
-            else Show();
+            if (panelRoot != null && panelRoot.activeSelf) { Hide(); return; }
+            // 다른 UI(상점·제작대·건설 모드 등)가 이미 잠궈 둔 동안엔 Tab으로 가방까지 겹쳐 열지 않는다.
+            if (inputReader != null && inputReader.IsLockedByOthers(this)) return;
+            Show();
         }
 
         private void HandleCancelPressed()
@@ -81,13 +84,13 @@ namespace Game.UI
             if (panelRoot == null || inventory == null) return;
             Refresh();
             panelRoot.SetActive(true);
-            inputReader?.SetLocked(true);
+            inputReader?.SetLocked(this, true);
         }
 
         private void Hide()
         {
             if (panelRoot != null) panelRoot.SetActive(false);
-            inputReader?.SetLocked(false);
+            inputReader?.SetLocked(this, false);
         }
 
         private void Refresh()

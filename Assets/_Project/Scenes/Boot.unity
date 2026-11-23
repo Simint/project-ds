@@ -2521,6 +2521,10 @@ PrefabInstance:
       propertyPath: promptUI
       value: 
       objectReference: {fileID: 65497189}
+    - target: {fileID: 963269600960441317, guid: 95da18d63ae7ada47920ddc6f673740c, type: 3}
+      propertyPath: survival
+      value: 
+      objectReference: {fileID: 928987481}
     - target: {fileID: 7143551093432253046, guid: 95da18d63ae7ada47920ddc6f673740c, type: 3}
       propertyPath: m_Name
       value: Player
@@ -5456,6 +5460,7 @@ MonoBehaviour:
   screenFader: {fileID: 1086902872}
   cameraConfiner: {fileID: 2070034808}
   playerBody: {fileID: 928987475}
+  playerController: {fileID: 1519405166}
   playerInput: {fileID: 1577566002}
   playerInventory: {fileID: 928987477}
   playerSurvival: {fileID: 928987481}
@@ -5477,6 +5482,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 716893304}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1519405166 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 963269600960441317, guid: 95da18d63ae7ada47920ddc6f673740c, type: 3}
+  m_PrefabInstance: {fileID: 928987474}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a512dc97ed510e84d8858ca550a48b8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerController
 --- !u!1 &1549110006
 GameObject:
   m_ObjectHideFlags: 0

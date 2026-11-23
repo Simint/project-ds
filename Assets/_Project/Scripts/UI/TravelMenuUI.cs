@@ -50,6 +50,7 @@ namespace Game.UI
             if (inputReader == null) return;
             inputReader.UISubmitPressed -= HandleUISubmitPressed;
             inputReader.UICancelPressed -= HandleUICancelPressed;
+            inputReader.SetLocked(this, false); // 열려 있는 채로 비활성화돼도 잠금이 영원히 남지 않게 한다
         }
 
         private void Update()
@@ -99,7 +100,7 @@ namespace Game.UI
             navRepeatTimer = 0f;
             openedFrame = Time.frameCount;
             SelectCurrent();
-            inputReader?.SetLocked(true);
+            inputReader?.SetLocked(this, true);
         }
 
         public void Hide()
@@ -107,7 +108,7 @@ namespace Game.UI
             if (panelRoot != null) panelRoot.SetActive(false);
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             Clear();
-            inputReader?.SetLocked(false);
+            inputReader?.SetLocked(this, false);
         }
 
         private void HandleUISubmitPressed()

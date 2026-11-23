@@ -43,6 +43,10 @@ namespace Game.Building
         public void Interact(GameObject interactor)
         {
             if (structureInstance == null || settings == null) return;
+            // 짐승 손(발)으로는 장작을 넣거나 물을 끓일 수 없다 — 사람 손일 때만 쓴다.
+            PlayerHands hands = interactor != null ? interactor.GetComponentInParent<PlayerHands>() : null;
+            if (hands != null && hands.Mode != HandMode.Human) return;
+
             PlayerHeldItem heldItem = interactor != null ? interactor.GetComponentInParent<PlayerHeldItem>() : null;
             ItemDefinition selected = heldItem?.SelectedDefinition;
             if (selected == null) return;

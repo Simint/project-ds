@@ -25,6 +25,7 @@ namespace Game.Maps
         [SerializeField] private ScreenFader screenFader;
         [SerializeField] private CinemachineConfiner2D cameraConfiner;
         [SerializeField] private Rigidbody2D playerBody;
+        [SerializeField] private PlayerController playerController;
         [SerializeField] private PlayerInputReader playerInput;
         [SerializeField] private PlayerInventory playerInventory;
         [SerializeField] private PlayerSurvival playerSurvival;
@@ -56,6 +57,7 @@ namespace Game.Maps
             if (screenFader == null) Debug.LogError("[MapLoader] screenFader 참조가 비어 있습니다.", this);
             if (cameraConfiner == null) Debug.LogError("[MapLoader] cameraConfiner 참조가 비어 있습니다.", this);
             if (playerBody == null) Debug.LogError("[MapLoader] playerBody 참조가 비어 있습니다.", this);
+            if (playerController == null) Debug.LogError("[MapLoader] playerController 참조가 비어 있습니다.", this);
             if (playerInput == null) Debug.LogError("[MapLoader] playerInput 참조가 비어 있습니다.", this);
             if (playerInventory == null) Debug.LogError("[MapLoader] playerInventory 참조가 비어 있습니다.", this);
             if (playerSurvival == null) Debug.LogError("[MapLoader] playerSurvival 참조가 비어 있습니다.", this);
@@ -69,11 +71,18 @@ namespace Game.Maps
             mapStateRegistry = GameServices.MapStateRegistry;
             hubStructureRegistry = GameServices.HubStructureRegistry;
             saveService = GameServices.SaveService;
+            Application.quitting += HandleApplicationQuitting;
 
             MapDefinition target = startOverrideMap != null ? startOverrideMap : startMap;
             string spawnId = startOverrideMap != null ? "" : startSpawnPointId;
             _ = Travel(target, spawnId, 0, startOverridePosition);
         }
+
+        private void OnDestroy() => Application.quitting -= HandleApplicationQuitting;
+
+        /// <summary>창을 닫거나 Play Mode를 멈출 때도 마지막 상태를 저장한다 (AutoSave가 매번 현재 맵을
+        /// 강제로 캡처하므로 여기서 더 할 일은 없다).</summary>
+        private void HandleApplicationQuitting() => AutoSave();
 
         /// <summary>저장 파일을 불러왔을 때 GameBootstrap이 시작 맵·위치를 덮어쓴다 (Start보다 먼저 불린다).</summary>
         public void SetStartOverride(MapDefinition map, Vector2 position)
@@ -98,12 +107,16 @@ namespace Game.Maps
                 return;
             }
             travelInProgress = true;
+            CancellationToken token = destroyCancellationToken;
+            bool fadedOut = false;
             try
             {
-                CancellationToken token = destroyCancellationToken;
-
-                playerInput?.SetLocked(true);
-                if (screenFader != null) await screenFader.FadeOut(token);
+                playerInput?.SetLocked(this, true);
+                if (screenFader != null)
+                {
+                    await screenFader.FadeOut(token);
+                    fadedOut = true;
+                }
 
                 if (currentScene.IsValid())
                 {
@@ -133,11 +146,30 @@ namespace Game.Maps
                 AutoSave();
 
                 MapChanged?.Invoke(CurrentMap);
-                if (screenFader != null) await screenFader.FadeIn(token);
+            }
+            catch (OperationCanceledException)
+            {
+                // 오브젝트가 파괴되는 중(씬 종료 등)의 정상적인 취소라 따로 알리지 않는다.
+            }
+            catch (Exception e)
+            {
+                GameLog.Warning("MapLoader", $"'{targetMap.SceneName}'으로 이동 중 오류가 나 중단합니다: {e}", this);
             }
             finally
             {
-                playerInput?.SetLocked(false);
+                // 화면이 까맣게 꺼진 채로 멈추지 않도록, 실패했어도 반드시 다시 밝힌다. screenFader가
+                // 오브젝트 파괴 중이면 취소 예외가 아닌 다른 예외(MissingReferenceException 등)도 날 수
+                // 있으므로 널리 잡는다 — 이 finally를 벗어나면 아래 SetLocked(false)/travelInProgress
+                // 리셋까지 같이 건너뛰어 버린다.
+                if (fadedOut && screenFader != null)
+                {
+                    try { await screenFader.FadeIn(token); }
+                    catch (Exception e)
+                    {
+                        GameLog.Warning("MapLoader", $"페이드 인 복구 중 오류: {e}", this);
+                    }
+                }
+                playerInput?.SetLocked(this, false);
                 travelInProgress = false;
             }
         }
@@ -163,6 +195,12 @@ namespace Game.Maps
         {
             if (saveService == null || mapStateRegistry == null || CurrentMap == null) return;
 
+            // 지금 맵의 채집물·문·화로·보관함 등 라이브 상태를 레지스트리에 먼저 밀어 넣는다 — 그러지
+            // 않으면 CaptureCurrentMapState/BuildGrid.SyncRegistry가 마지막으로 돈 시점(맵 이동) 이후의
+            // 변화(잠자기 중 문을 열어 둔 채 저장 등)가 저장 파일에 빠진다.
+            CaptureCurrentMapState();
+            GameServices.BuildGrid?.SyncNow();
+
             var data = new WorldSaveData
             {
                 settings = worldClock?.Settings,
@@ -175,8 +213,8 @@ namespace Game.Maps
             };
 
             if (playerInventory != null)
-                foreach ((string itemId, int count, long spoilAtMinute, int durability) in playerInventory.EnumerateSlots())
-                    data.inventorySlots.Add(new InventorySlotData { itemId = itemId, count = count, spoilAtMinute = spoilAtMinute, durability = durability });
+                foreach ((string itemId, int count, long spoilAtMinute, int durability, int slotIndex) in playerInventory.EnumerateSlots())
+                    data.inventorySlots.Add(new InventorySlotData { itemId = itemId, count = count, spoilAtMinute = spoilAtMinute, durability = durability, slotIndex = slotIndex });
 
             if (hubStructureRegistry != null)
                 data.hubStructures = new List<StructureSaveData>(hubStructureRegistry.Current);
@@ -249,9 +287,8 @@ namespace Game.Maps
 
         private void PlacePlayerAt(Vector2 position)
         {
-            if (playerBody == null) return;
-            playerBody.position = position;
-            playerBody.linearVelocity = Vector2.zero;
+            if (playerController != null) playerController.TeleportTo(position);
+            else if (playerBody != null) playerBody.position = position;
         }
 
         private void ConfigureCameraBounds()

@@ -87,6 +87,15 @@ namespace Game.Inventory
             return removed;
         }
 
+        /// <summary>저장 파일을 불러올 때 쓴다 — 지정한 슬롯 번호에 그대로 놓는다(TryAdd처럼 빈 슬롯을
+        /// 찾아 쌓지 않는다). 그 번호에 이미 있던 내용은 덮어쓴다.</summary>
+        public void SetSlotExact(int index, string itemId, int count, int maxStackSize, float unitWeight, long spoilAtMinute, int durability)
+        {
+            if (index < 0 || index >= slots.Length || string.IsNullOrEmpty(itemId) || count <= 0) return;
+            slots[index] = new InventorySlot(itemId, count, maxStackSize, unitWeight, spoilAtMinute, durability);
+            Changed?.Invoke();
+        }
+
         /// <summary>정확히 이 슬롯 번호에서만 치운다 (같은 아이템이라도 슬롯마다 부패 시각이 다를 수 있어,
         /// 사용 UI가 고른 슬롯을 그대로 써야 한다).</summary>
         public int RemoveFromSlot(int slotIndex, int amount)

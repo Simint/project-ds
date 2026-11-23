@@ -27,6 +27,7 @@ namespace Game.UI
 
         private readonly List<Text> spawnedEntries = new List<Text>();
         private StationKind currentStation;
+        private int openedFrame = -1;
 
         private void Awake()
         {
@@ -50,7 +51,11 @@ namespace Game.UI
 
         private void OnDisable()
         {
-            if (inputReader != null) inputReader.UICancelPressed -= HandleCancelPressed;
+            if (inputReader != null)
+            {
+                inputReader.UICancelPressed -= HandleCancelPressed;
+                inputReader.SetLocked(this, false); // 열려 있는 채로 비활성화돼도 잠금이 영원히 남지 않게 한다
+            }
         }
 
         public void Show(StationKind station)
@@ -59,18 +64,23 @@ namespace Game.UI
             currentStation = station;
             Refresh();
             panelRoot.SetActive(true);
-            inputReader?.SetLocked(true);
+            openedFrame = Time.frameCount;
+            inputReader?.SetLocked(this, true);
         }
 
         private void Hide()
         {
             if (panelRoot != null) panelRoot.SetActive(false);
-            inputReader?.SetLocked(false);
+            inputReader?.SetLocked(this, false);
         }
 
         private void HandleCancelPressed()
         {
-            if (panelRoot != null && panelRoot.activeSelf) Hide();
+            if (panelRoot == null || !panelRoot.activeSelf) return;
+            // Interact(패드 East)와 같은 물리 버튼이라, 작업대를 연 바로 그 입력에 바로 닫히는 걸 막는다
+            // (TravelMenuUI와 같은 이유).
+            if (Time.frameCount == openedFrame) return;
+            Hide();
         }
 
         private void Refresh()

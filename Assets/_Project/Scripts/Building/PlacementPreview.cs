@@ -18,14 +18,17 @@ namespace Game.Building
             Hide();
         }
 
-        public void Refresh(Sprite sprite, Vector3 worldPosition, bool canPlace)
+        /// <summary>visualLocalOffset은 실제 프리팹의 Visual 자식이 루트에서 떨어진 만큼이다
+        /// (add-structure 스킬 1절, footprint.x*0.5). 이걸 더하지 않으면 2칸 이상인 구조물은 미리보기가
+        /// 실제로 놓일 자리보다 반 칸 어긋나 보인다.</summary>
+        public void Refresh(Sprite sprite, Vector3 worldPosition, Vector3 visualLocalOffset, bool canPlace)
         {
             if (spriteRenderer == null) return;
             spriteRenderer.enabled = sprite != null;
             if (sprite == null) return;
 
             spriteRenderer.sprite = sprite;
-            transform.position = worldPosition;
+            transform.position = worldPosition + visualLocalOffset;
             Color tint = canPlace ? settings.PreviewAllowedColor : settings.PreviewBlockedColor;
             spriteRenderer.color = tint;
         }

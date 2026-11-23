@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Core;
+using Game.Maps;
 using Game.Save;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace Game.Building
     /// 은신처 건설의 유일한 창구 (ARCHITECTURE.md 4.5, add-structure 스킬 3절). 셀 점유를
     /// Dictionary&lt;Vector2Int, StructureInstance&gt;로 관리하고, 좌표 변환은 Unity Grid 하나로만 한다.
     /// 은신처 씬은 다른 맵처럼 오갈 때마다 통째로 사라지므로, 현재 상태를 HubStructureRegistry(세션
-    /// 동안의 기억 장소)에 그때그때 밀어 넣고 Start에서 거기서 읽어 되돌린다.
+    /// 동안의 기억 장소)에 그때그때 밀어 넣고 OnEnable에서 거기서 읽어 되돌린다.
     /// </summary>
     public sealed class BuildGrid : MonoBehaviour
     {
@@ -20,6 +21,11 @@ namespace Game.Building
 
         private readonly Dictionary<Vector2Int, StructureInstance> occupancy = new Dictionary<Vector2Int, StructureInstance>();
         private readonly List<StructureInstance> instances = new List<StructureInstance>();
+        private readonly HashSet<Vector2Int> spawnPointCells = new HashSet<Vector2Int>();
+
+        // CanPlace가 건설 모드 Update마다 불리므로(미리보기), FootprintCells는 매번 새 반복자를
+        // 할당하지 않고 이 버퍼를 채워 돌려준다 (.claude/rules/csharp.md "Update 안의 ... 할당").
+        private readonly List<Vector2Int> footprintBuffer = new List<Vector2Int>();
 
         public HubBuildArea BuildArea => buildArea;
 
@@ -29,16 +35,36 @@ namespace Game.Building
             if (buildArea == null) Debug.LogError("[BuildGrid] buildArea 참조가 비어 있습니다.", this);
             if (structureDatabase == null) Debug.LogError("[BuildGrid] structureDatabase 참조가 비어 있습니다.", this);
             if (structuresParent == null) Debug.LogError("[BuildGrid] structuresParent 참조가 비어 있습니다.", this);
+
+            // 스폰 지점 칸은 건설 금지(플레이어가 거기 서 있을 때 바로 벽에 막히면 안 된다). 같은 씬(은신처)
+            // 안의 다른 오브젝트를 읽는 한 번뿐인 캐시라 Awake에서 해도 안전하다(MapRoot도 같은 방식).
+            foreach (SpawnPoint sp in FindObjectsByType<SpawnPoint>(FindObjectsInactive.Include))
+                spawnPointCells.Add(WorldToCell(sp.transform.position));
         }
 
-        private void Start()
+        /// <summary>복원은 Start가 아니라 OnEnable에서 한다. MapLoader.Travel은 씬을 비동기로 불러온 뒤
+        /// 같은 프레임에서 바로 계속돼(RestoreNewMapState → ... → AutoSave) 그 안에서
+        /// GameServices.BuildGrid.SyncNow()를 부를 수 있는데, Start는 그 다음 프레임으로 미뤄지는 반면
+        /// OnEnable은 씬 활성화와 같은 프레임에 동기로 불린다(Awake/OnEnable까지는 씬 로드에 포함, Start는
+        /// 별도). Start에서 복원했다면, AutoSave의 SyncNow가 아직 비어 있는 instances로 레지스트리를
+        /// 먼저 덮어써 버려 복원 자체가 날아가는 버그가 있었다.</summary>
+        private void OnEnable()
         {
+            GameServices.RegisterBuildGrid(this);
+
             if (GameServices.HubStructureRegistry == null) return;
             foreach (StructureSaveData data in GameServices.HubStructureRegistry.Current)
                 RestoreOne(data);
         }
 
-        private void OnDisable() => SyncRegistry();
+        private void OnDisable()
+        {
+            if (GameServices.BuildGrid == (object)this) GameServices.RegisterBuildGrid(null);
+            SyncRegistry();
+        }
+
+        /// <summary>저장 직전에 바깥(MapLoader)이 라이브 상태를 강제로 레지스트리에 반영시키려 부른다.</summary>
+        public void SyncNow() => SyncRegistry();
 
         public Vector2Int WorldToCell(Vector2 worldPosition) => (Vector2Int)grid.WorldToCell(worldPosition);
 
@@ -49,10 +75,13 @@ namespace Game.Building
         public bool CanPlace(StructureDefinition definition, Vector2Int originCell)
         {
             if (definition == null || definition.Prefab == null) return false;
-            foreach (Vector2Int cell in FootprintCells(originCell, definition.Footprint))
+            List<Vector2Int> cells = FootprintCells(originCell, definition.Footprint);
+            for (int i = 0; i < cells.Count; i++)
             {
+                Vector2Int cell = cells[i];
                 if (!buildArea.IsCellAllowed(cell)) return false;
                 if (occupancy.ContainsKey(cell)) return false;
+                if (spawnPointCells.Contains(cell)) return false;
             }
             Vector2 originWorld = CellToWorld(originCell);
             return PlacementRules.CanPlace(definition.Kind, originWorld, definition.Footprint);
@@ -131,21 +160,28 @@ namespace Game.Building
 
         private void RegisterOccupancy(StructureInstance instance)
         {
-            foreach (Vector2Int cell in FootprintCells(instance.Cell, instance.Definition.Footprint))
-                occupancy[cell] = instance;
+            List<Vector2Int> cells = FootprintCells(instance.Cell, instance.Definition.Footprint);
+            for (int i = 0; i < cells.Count; i++)
+                occupancy[cells[i]] = instance;
         }
 
         private void UnregisterOccupancy(StructureInstance instance)
         {
-            foreach (Vector2Int cell in FootprintCells(instance.Cell, instance.Definition.Footprint))
-                occupancy.Remove(cell);
+            List<Vector2Int> cells = FootprintCells(instance.Cell, instance.Definition.Footprint);
+            for (int i = 0; i < cells.Count; i++)
+                occupancy.Remove(cells[i]);
         }
 
-        private static IEnumerable<Vector2Int> FootprintCells(Vector2Int origin, Vector2Int footprint)
+        /// <summary>origin에서 footprint가 덮는 모든 셀. CanPlace가 건설 모드 Update마다 부르므로
+        /// (미리보기), 매번 새 컬렉션을 만들지 않고 이 버퍼를 비우고 다시 채워 돌려준다 — 호출한 쪽은
+        /// 바로 다 쓰고 버려야 한다(다음 호출에서 내용이 바뀐다).</summary>
+        private List<Vector2Int> FootprintCells(Vector2Int origin, Vector2Int footprint)
         {
+            footprintBuffer.Clear();
             for (int x = 0; x < footprint.x; x++)
                 for (int y = 0; y < footprint.y; y++)
-                    yield return new Vector2Int(origin.x + x, origin.y + y);
+                    footprintBuffer.Add(new Vector2Int(origin.x + x, origin.y + y));
+            return footprintBuffer;
         }
     }
 }

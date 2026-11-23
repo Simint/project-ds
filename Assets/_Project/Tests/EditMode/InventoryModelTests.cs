@@ -90,6 +90,32 @@ public sealed class InventoryModelTests
         Assert.AreEqual(2, changeCount);
     }
 
+    [Test]
+    public void SetSlotExact_PlacesItemInThatExactSlot()
+    {
+        var model = new InventoryModel(5);
+
+        model.SetSlotExact(3, "wood_log", 2, 20, 0.5f, spoilAtMinute: 0, durability: -1);
+
+        Assert.AreEqual(2, model.CountOf("wood_log"));
+        Assert.IsTrue(model.Slots[3] != null && model.Slots[3].ItemId == "wood_log");
+        for (int i = 0; i < model.SlotCount; i++)
+            if (i != 3) Assert.IsTrue(model.Slots[i] == null || model.Slots[i].IsEmpty);
+    }
+
+    [Test]
+    public void SetSlotExact_OverwritesWhateverWasInThatSlot()
+    {
+        var model = new InventoryModel(5);
+        model.SetSlotExact(0, "wood_log", 5, 20, 0.5f, 0, -1);
+
+        model.SetSlotExact(0, "axe", 1, 1, 1f, 0, durability: 20);
+
+        Assert.AreEqual(0, model.CountOf("wood_log"));
+        Assert.AreEqual("axe", model.Slots[0].ItemId);
+        Assert.AreEqual(20, model.Slots[0].Durability);
+    }
+
     private static int CountUsedSlots(InventoryModel model)
     {
         int used = 0;

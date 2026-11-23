@@ -17,6 +17,11 @@ namespace Game.Core
     /// 저장 파일이 있으면 불러와 시계·가방·맵 상태·시작 맵을 그 내용으로 덮어쓴 뒤 준비 완료를
     /// 알린다 (ARCHITECTURE.md 2.3, 3.1, 4.10).
     /// </summary>
+    // WorldClock은 -100이라 항상 먼저 Awake가 돈다. GameBootstrap은 그 다음, 나머지(기본값 0) 플레이어
+    // 쪽 컴포넌트보다는 먼저 돌도록 둬서, 여기서 복원하는 값을 플레이어 쪽 컴포넌트가 자기 Awake에서
+    // 실수로 덮어쓸 여지를 없앤다(지금은 아무도 그렇게 하지 않지만, 순서를 명시해 두면 나중에 생기는
+    // 사고를 막는다).
+    [DefaultExecutionOrder(-50)]
     public sealed class GameBootstrap : MonoBehaviour
     {
         [SerializeField] private WorldClock worldClock;
@@ -76,9 +81,9 @@ namespace Game.Core
 
             if (playerInventory != null)
             {
-                var slots = new List<(string itemId, int count, long spoilAtMinute, int durability)>();
+                var slots = new List<(string itemId, int count, long spoilAtMinute, int durability, int slotIndex)>();
                 foreach (InventorySlotData slot in save.inventorySlots)
-                    slots.Add((slot.itemId, slot.count, slot.spoilAtMinute, slot.durability));
+                    slots.Add((slot.itemId, slot.count, slot.spoilAtMinute, slot.durability, slot.slotIndex));
                 playerInventory.RestoreSlots(slots);
             }
 

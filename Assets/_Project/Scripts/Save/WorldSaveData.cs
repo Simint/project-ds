@@ -13,10 +13,12 @@ namespace Game.Save
     public sealed class WorldSaveData
     {
         /// <summary>저장 형식이 바뀔 때마다 올린다 (ARCHITECTURE.md 4.10 "버전과 옛 저장 파일"). 2 =
-        /// MVP 4·5단계에서 늘어난 stats·statusEffects·durability·hubStructures. 옛 버전 파일을 불러올 때
-        /// 새로 생긴 필드는 JsonUtility가 C# 기본값으로 채운다(기본값으로 충분하지 않은 변경이면 그때
+        /// MVP 4·5단계에서 늘어난 stats·statusEffects·durability·hubStructures. 3 = InventorySlotData.
+        /// slotIndex 추가(가방·보관함을 정확히 같은 칸에 복원). 옛 버전 파일을 불러올 때 새로 생긴
+        /// 필드는 JsonUtility가 C# 기본값(필드 초기값, 예: slotIndex -1)으로 채운다 — slotIndex가 -1이면
+        /// 옛 버전처럼 빈 칸부터 채우는 식으로 되돌린다(기본값으로 충분하지 않은 변경이면 그때
         /// Save/Migrations/에 실제 변환 코드를 추가한다).</summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int version = CurrentVersion;
         public WorldSettings settings;
@@ -38,6 +40,10 @@ namespace Game.Save
         public int count;
         public long spoilAtMinute;
         public int durability = -1;
+
+        /// <summary>어느 칸이었는지(가방·보관함 모두 공용). -1 = 모른다(버전 3 이전 저장 파일) — 그러면
+        /// 빈 칸부터 채우는 옛 방식으로 되돌린다.</summary>
+        public int slotIndex = -1;
     }
 
     /// <summary>은신처에 설치된 구조물 하나 (ARCHITECTURE.md 4.5, add-structure 스킬 5절). PersistentId가

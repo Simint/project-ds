@@ -29,6 +29,7 @@ namespace Game.Core
         public static HubStructureRegistry HubStructureRegistry { get; private set; }
         public static HeatZoneRegistry HeatZoneRegistry { get; private set; }
         public static BuildModeController BuildModeController { get; private set; }
+        public static BuildGrid BuildGrid { get; private set; }
         public static StorageUI StorageUI { get; private set; }
         public static CraftingUI CraftingUI { get; private set; }
         public static SleepUI SleepUI { get; private set; }
@@ -58,6 +59,9 @@ namespace Game.Core
         /// (다른 서비스들과 달리 Boot에서 한 번만 등록하지 않는다).</summary>
         public static void RegisterBuildModeController(BuildModeController controller) => BuildModeController = controller;
 
+        /// <summary>BuildModeController와 같은 이유로 은신처 씬이 열려 있을 때만 등록·해제한다.</summary>
+        public static void RegisterBuildGrid(BuildGrid grid) => BuildGrid = grid;
+
         public static void RegisterStorageUI(StorageUI ui) => StorageUI = ui;
         public static void RegisterCraftingUI(CraftingUI ui) => CraftingUI = ui;
         public static void RegisterSleepUI(SleepUI ui) => SleepUI = ui;
@@ -86,6 +90,7 @@ namespace Game.Core
             HubStructureRegistry = null;
             HeatZoneRegistry = null;
             BuildModeController = null;
+            BuildGrid = null;
             StorageUI = null;
             CraftingUI = null;
             SleepUI = null;

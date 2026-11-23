@@ -41,6 +41,8 @@ namespace Game.Survival
             SurvivalStat hp = survival.Stats.Get(StatIds.Hp);
             hp?.Add(-excess * settings.FallDamagePerExcessTile);
             survival.Stats.NotifyChanged();
+            // 다음 분이 지날 때까지 기다리지 않고 지금 바로 사망 판정한다 (ApplyHealthRule만 믿으면 늦어진다).
+            survival.CheckDeath();
 
             if (fallDistanceTiles >= settings.FractureFallThresholdTiles)
                 statusEffects?.Apply(StatusEffectIds.Fracture);

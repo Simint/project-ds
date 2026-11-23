@@ -28,13 +28,29 @@ namespace Game.Survival
         private void OnDisable()
         {
             if (survival != null) survival.Died -= HandleDied;
+            if (GameServices.MapLoader != null) GameServices.MapLoader.MapChanged -= HandleMapChangedAfterDeath;
         }
 
         private void HandleDied()
         {
             survival.Revive();
-            if (GameServices.MapLoader != null && hubMap != null)
-                _ = GameServices.MapLoader.Travel(hubMap, hubSpawnPointId, 0);
+            MapLoader loader = GameServices.MapLoader;
+            if (loader == null || hubMap == null) return;
+
+            // 맵 이동 도중(페이드·씬 로드 중)에 죽으면 Travel이 "이미 이동 중"이라며 조용히 무시한다 —
+            // 지금 진행 중인 이동이 끝날 때까지 기다렸다가 은신처로 되돌린다.
+            if (loader.IsTraveling)
+                loader.MapChanged += HandleMapChangedAfterDeath;
+            else
+                _ = loader.Travel(hubMap, hubSpawnPointId, 0);
+        }
+
+        private void HandleMapChangedAfterDeath(MapDefinition arrivedAt)
+        {
+            MapLoader loader = GameServices.MapLoader;
+            if (loader == null) return;
+            loader.MapChanged -= HandleMapChangedAfterDeath;
+            if (hubMap != null) _ = loader.Travel(hubMap, hubSpawnPointId, 0);
         }
     }
 }

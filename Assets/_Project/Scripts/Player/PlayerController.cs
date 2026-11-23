@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Core;
+using Game.Survival;
 using UnityEngine;
 
 namespace Game.Player
@@ -14,6 +15,7 @@ namespace Game.Player
     {
         [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private PlayerHands hands;
+        [SerializeField] private PlayerSurvival survival;
         [SerializeField] private PlayerMovementSettings settings;
         [SerializeField] private Vector2 groundCheckOffset = new Vector2(0f, 0.05f);
         [SerializeField] private Vector2 groundCheckSize = new Vector2(0.4f, 0.1f);
@@ -53,6 +55,7 @@ namespace Game.Player
             body = GetComponent<Rigidbody2D>();
             if (inputReader == null) Debug.LogError("[PlayerController] inputReader 참조가 비어 있습니다.", this);
             if (hands == null) Debug.LogError("[PlayerController] hands 참조가 비어 있습니다.", this);
+            if (survival == null) Debug.LogError("[PlayerController] survival 참조가 비어 있습니다.", this);
             if (settings == null) Debug.LogError("[PlayerController] settings 참조가 비어 있습니다.", this);
         }
 
@@ -111,6 +114,7 @@ namespace Game.Player
         public MovementPreset ResolvePreset()
         {
             if (inputReader == null || !inputReader.RunHeld) return settings.Walk;
+            if (survival != null && !survival.HasStamina) return settings.Walk; // 스태미나가 바닥이면 달릴 수 없다
             return hands != null && hands.Mode == HandMode.Beast ? settings.BeastRun : settings.Run;
         }
 
@@ -127,6 +131,20 @@ namespace Game.Player
         public void ClearJumpMultiplier(string sourceKey) => jumpMultipliers.Remove(sourceKey);
 
         internal void RaiseLanded(float fallDistanceTiles) => Landed?.Invoke(fallDistanceTiles);
+
+        /// <summary>맵 이동으로 플레이어를 다른 곳에 놓을 때 MapLoader가 쓴다. 위치만 바꾸면 Falling
+        /// 상태가 이전 위치를 기준으로 낙하 거리를 재서(FallingMotionState.startY), 도착하자마자 엉뚱한
+        /// 낙하 피해가 들어갈 수 있다 — 접지 상태로 되돌려 다음 FixedUpdate에서 새 위치 기준으로 다시
+        /// 판정하게 한다.</summary>
+        public void TeleportTo(Vector2 position)
+        {
+            body.position = position;
+            body.linearVelocity = Vector2.zero;
+            coyoteTimer = 0f;
+            jumpBufferTimer = 0f;
+            jumpCutRequested = false;
+            ChangeState(groundedState);
+        }
 
         private static float Multiply(Dictionary<string, float> multipliers)
         {

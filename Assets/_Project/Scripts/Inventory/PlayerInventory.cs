@@ -30,7 +30,8 @@ namespace Game.Inventory
             if (itemDatabase == null) Debug.LogError("[PlayerInventory] itemDatabase 참조가 비어 있습니다.", this);
         }
 
-        /// <summary>얻은 아이템을 가방에 넣는다. 다 못 담으면 남은 만큼 Pickup을 떨어뜨린다.</summary>
+        /// <summary>갓 얻은 아이템을 가방에 넣는다(부패 시각·내구도를 새로 계산한다). 다 못 담으면 남은
+        /// 만큼 Pickup을 떨어뜨린다.</summary>
         public void Collect(string itemId, int count)
         {
             if (count <= 0) return;
@@ -49,11 +50,26 @@ namespace Game.Inventory
             }
             int durability = def.IsTool ? def.Tool.MaxDurability : -1;
 
-            int leftover = Model.TryAdd(itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAt, durability);
-            if (leftover > 0) DropToGround(itemId, leftover);
+            CollectWithState(itemId, count, spoilAt, durability);
         }
 
-        private void DropToGround(string itemId, int count)
+        /// <summary>이미 부패 시각·내구도가 정해진 스택을 그대로 받는다(보관함 꺼내기, 바닥의 Pickup
+        /// 흡수처럼 "이미 있던" 아이템을 옮길 때 쓴다 — 넣을 때와 대칭으로 상태를 잃지 않는다).</summary>
+        public void CollectWithState(string itemId, int count, long spoilAtMinute, int durability)
+        {
+            if (count <= 0) return;
+            ItemDefinition def = itemDatabase != null ? itemDatabase.Find(itemId) : null;
+            if (def == null)
+            {
+                GameLog.Warning("PlayerInventory", $"아이템 id '{itemId}'를 찾지 못했습니다.", this);
+                return;
+            }
+
+            int leftover = Model.TryAdd(itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAtMinute, durability);
+            if (leftover > 0) DropToGround(itemId, leftover, spoilAtMinute, durability);
+        }
+
+        private void DropToGround(string itemId, int count, long spoilAtMinute, int durability)
         {
             if (pickupPrefab == null)
             {
@@ -61,29 +77,38 @@ namespace Game.Inventory
                 return;
             }
             Pickup pickup = Instantiate(pickupPrefab, transform.position, Quaternion.identity);
-            pickup.Initialize(itemId, count);
+            pickup.Initialize(itemId, count, spoilAtMinute, durability);
         }
 
         public int CountOf(string itemId) => Model.CountOf(itemId);
 
         public int Remove(string itemId, int count) => Model.Remove(itemId, count);
 
-        public IEnumerable<(string itemId, int count, long spoilAtMinute, int durability)> EnumerateSlots()
+        public IEnumerable<(string itemId, int count, long spoilAtMinute, int durability, int slotIndex)> EnumerateSlots()
         {
-            foreach (InventorySlot slot in Model.Slots)
-                if (slot != null && !slot.IsEmpty) yield return (slot.ItemId, slot.Count, slot.SpoilAtMinute, slot.Durability);
+            IReadOnlyList<InventorySlot> slots = Model.Slots;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                InventorySlot slot = slots[i];
+                if (slot != null && !slot.IsEmpty) yield return (slot.ItemId, slot.Count, slot.SpoilAtMinute, slot.Durability, i);
+            }
         }
 
-        /// <summary>저장 파일에서 불러올 때 현재 가방을 비우고 그대로 다시 채운다.</summary>
-        public void RestoreSlots(IEnumerable<(string itemId, int count, long spoilAtMinute, int durability)> entries)
+        /// <summary>저장 파일에서 불러올 때 현재 가방을 비우고 그대로 다시 채운다. slotIndex가 있으면
+        /// (0 이상) 그 칸에 정확히 되돌린다 — 옛 버전 저장 파일처럼 slotIndex가 없으면(-1) 예전처럼 빈
+        /// 칸부터 채운다.</summary>
+        public void RestoreSlots(IEnumerable<(string itemId, int count, long spoilAtMinute, int durability, int slotIndex)> entries)
         {
             Model.Clear();
             if (entries == null) return;
-            foreach ((string itemId, int count, long spoilAtMinute, int durability) in entries)
+            foreach ((string itemId, int count, long spoilAtMinute, int durability, int slotIndex) in entries)
             {
                 ItemDefinition def = itemDatabase != null ? itemDatabase.Find(itemId) : null;
                 if (def == null) continue;
-                Model.TryAdd(itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAtMinute, durability);
+                if (slotIndex >= 0 && slotIndex < Model.SlotCount)
+                    Model.SetSlotExact(slotIndex, itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAtMinute, durability);
+                else
+                    Model.TryAdd(itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAtMinute, durability);
             }
         }
     }

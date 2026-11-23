@@ -47,6 +47,9 @@ namespace Game.Inventory
             // UseItem은 가방이 열려 있어도 쓸 수 있도록 PlayerInputReader의 잠금을 타지 않지만(가방 Tab과
             // 같은 locked 값을 맵 이동 페이드도 쓰므로), 맵이 바뀌는 도중에는 건너뛴다.
             if (GameServices.MapLoader != null && GameServices.MapLoader.IsTraveling) return;
+            // 마우스 오른쪽 버튼이 UseItem과 건설 모드의 BuildDemolish에 같이 묶여 있다 — 건설 모드 중엔
+            // 철거만 하고, 손에 든 소비 아이템을 같이 쓰지 않는다.
+            if (GameServices.BuildModeController != null && GameServices.BuildModeController.IsActive) return;
             if (hotbar != null) UseSlot(hotbar.SelectedIndex);
         }
 

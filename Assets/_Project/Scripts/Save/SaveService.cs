@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Game.Core;
 using UnityEngine;
@@ -20,21 +21,41 @@ namespace Game.Save
             saveDirectory = saveDirectoryOverride ?? Path.Combine(Application.persistentDataPath, "saves");
         }
 
+        /// <summary>임시 파일에 먼저 쓰고 나서 실제 파일로 바꿔 끼운다 — 쓰다가 중간에 멈추면(강종,
+        /// 디스크 꽉 참 등) 기존 저장 파일은 그대로 남는다. 절반만 쓰인 파일이 생기지 않는다.</summary>
         public void Save(WorldSaveData data)
         {
             Directory.CreateDirectory(saveDirectory);
+            string path = Path.Combine(saveDirectory, FileName);
+            string tempPath = path + ".tmp";
             string json = JsonUtility.ToJson(data);
-            File.WriteAllText(Path.Combine(saveDirectory, FileName), json);
+            File.WriteAllText(tempPath, json);
+
+            if (File.Exists(path)) File.Replace(tempPath, path, null);
+            else File.Move(tempPath, path);
         }
 
         /// <summary>저장 파일이 없으면(첫 실행) null을 돌려준다. 옛 버전 파일도 그대로 읽는다 — 새로
-        /// 생긴 필드는 JsonUtility가 C# 기본값으로 채운다 (WorldSaveData.CurrentVersion 참고).</summary>
+        /// 생긴 필드는 JsonUtility가 C# 기본값으로 채운다 (WorldSaveData.CurrentVersion 참고). 파일이
+        /// 손상돼 읽을 수 없으면(깨진 JSON 등) 경고만 남기고 null을 돌려준다 — 디스크 입출력은 에이전트가
+        /// 통제할 수 없는 경계라 여기서 검증한다.</summary>
         public WorldSaveData Load()
         {
             string path = Path.Combine(saveDirectory, FileName);
             if (!File.Exists(path)) return null;
-            string json = File.ReadAllText(path);
-            WorldSaveData data = JsonUtility.FromJson<WorldSaveData>(json);
+
+            WorldSaveData data;
+            try
+            {
+                string json = File.ReadAllText(path);
+                data = JsonUtility.FromJson<WorldSaveData>(json);
+            }
+            catch (Exception e)
+            {
+                GameLog.Warning("Save", $"저장 파일이 손상되어 무시합니다: {e.Message}");
+                return null;
+            }
+
             if (data != null && data.version < WorldSaveData.CurrentVersion)
                 GameLog.Info("Save", $"옛 버전 저장 파일(v{data.version})을 불러와 기본값으로 채웠습니다 (현재 v{WorldSaveData.CurrentVersion}).");
             return data;

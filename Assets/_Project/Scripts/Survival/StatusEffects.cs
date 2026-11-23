@@ -47,12 +47,25 @@ namespace Game.Survival
             foreach (string id in expired) Cure(id);
         }
 
+        /// <summary>데이터만 조용히 덮어 쓴다(새로 생긴 효과는 이벤트를 쏘지 않는다 — 불러온 뒤
+        /// PlayerStatusEffects.OnEnable이 한 번 훑어 다시 적용한다). 다만 이전에 걸려 있다가 이번엔
+        /// 빠진 효과는 EffectCleared를 그대로 쏜다 — 안 그러면 그 효과가 걸어 둔 이동 배율·스탯
+        /// 모디파이어가 active에서는 지워져도 PlayerController/SurvivalStats에는 남아 있게 된다.</summary>
         public void SetFromSave(IEnumerable<(string id, long untilMinute)> entries)
         {
-            active.Clear();
-            if (entries == null) return;
-            foreach ((string id, long untilMinute) in entries)
-                active[id] = new ActiveStatusEffect(id, untilMinute);
+            var incoming = new Dictionary<string, long>();
+            if (entries != null)
+                foreach ((string id, long untilMinute) in entries)
+                    if (!string.IsNullOrEmpty(id)) incoming[id] = untilMinute;
+
+            List<string> noLongerActive = null;
+            foreach (string id in active.Keys)
+                if (!incoming.ContainsKey(id)) (noLongerActive ??= new List<string>()).Add(id);
+            if (noLongerActive != null)
+                foreach (string id in noLongerActive) Cure(id);
+
+            foreach (KeyValuePair<string, long> pair in incoming)
+                active[pair.Key] = new ActiveStatusEffect(pair.Key, pair.Value);
         }
 
         public IEnumerable<(string id, long untilMinute)> EnumerateForSave()

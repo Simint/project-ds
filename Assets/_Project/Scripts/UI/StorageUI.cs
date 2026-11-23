@@ -25,6 +25,7 @@ namespace Game.UI
 
         private readonly List<Text> spawnedEntries = new List<Text>();
         private StorageContainer currentStorage;
+        private int openedFrame = -1;
 
         private void Awake()
         {
@@ -48,7 +49,11 @@ namespace Game.UI
 
         private void OnDisable()
         {
-            if (inputReader != null) inputReader.UICancelPressed -= HandleCancelPressed;
+            if (inputReader != null)
+            {
+                inputReader.UICancelPressed -= HandleCancelPressed;
+                inputReader.SetLocked(this, false); // 열려 있는 채로 비활성화돼도 잠금이 영원히 남지 않게 한다
+            }
             if (depositAllButton != null) depositAllButton.onClick.RemoveListener(HandleDepositAllClicked);
             if (currentStorage != null) currentStorage.Model.Changed -= Refresh;
         }
@@ -61,7 +66,8 @@ namespace Game.UI
             currentStorage.Model.Changed += Refresh;
             Refresh();
             panelRoot.SetActive(true);
-            inputReader?.SetLocked(true);
+            openedFrame = Time.frameCount;
+            inputReader?.SetLocked(this, true);
         }
 
         private void Hide()
@@ -69,12 +75,16 @@ namespace Game.UI
             if (panelRoot != null) panelRoot.SetActive(false);
             if (currentStorage != null) currentStorage.Model.Changed -= Refresh;
             currentStorage = null;
-            inputReader?.SetLocked(false);
+            inputReader?.SetLocked(this, false);
         }
 
         private void HandleCancelPressed()
         {
-            if (panelRoot != null && panelRoot.activeSelf) Hide();
+            if (panelRoot == null || !panelRoot.activeSelf) return;
+            // Interact(패드 East)와 같은 물리 버튼이라, 보관함을 연 바로 그 입력에 바로 닫히는 걸 막는다
+            // (TravelMenuUI와 같은 이유).
+            if (Time.frameCount == openedFrame) return;
+            Hide();
         }
 
         private void Refresh()
@@ -114,8 +124,10 @@ namespace Game.UI
             if (slot == null || slot.IsEmpty) return;
 
             string itemId = slot.ItemId;
+            long spoilAtMinute = slot.SpoilAtMinute;
+            int durability = slot.Durability;
             int taken = currentStorage.Model.RemoveFromSlot(slotIndex, slot.Count);
-            if (taken > 0) playerInventory.Collect(itemId, taken);
+            if (taken > 0) playerInventory.CollectWithState(itemId, taken, spoilAtMinute, durability);
         }
 
         /// <summary>가방의 모든 슬롯을 돌며 보관함에 들어가는 만큼만 옮긴다. 부패 시각·내구도도 그대로 옮긴다.</summary>
