@@ -193,13 +193,10 @@ namespace Game.Survival
             bool safe = mapLoader?.CurrentMap != null &&
                         (mapLoader.CurrentMap.IsIndoor || mapLoader.CurrentMap.Kind == MapKind.Hub);
             int hour = (int)(worldClock.TotalMinutes / 60 % 24);
-            bool night = settings.IsNightHour(hour);
 
-            if (!safe && night)
-                Stats.SetModifier(EnvironmentSource, StatIds.Temperature,
-                    StatModifier.Additive(settings.NightOutdoorTemperatureDropPerHour));
-            else
-                Stats.ClearModifier(EnvironmentSource, StatIds.Temperature);
+            // 실외 밤이 아니면(실내·은신처, 실외 낮) 서서히 회복한다 — 최대치에서 멈추는 건
+            // SurvivalStat.Add의 clamp가 처리한다.
+            Stats.SetModifier(EnvironmentSource, StatIds.Temperature, settings.ComputeTemperatureModifier(safe, hour));
         }
     }
 }

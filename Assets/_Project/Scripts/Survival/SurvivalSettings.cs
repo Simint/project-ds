@@ -26,8 +26,10 @@ namespace Game.Survival
         [Header("손 모드")]
         [SerializeField] private float beastHandHungerMultiplier = 1.5f;
 
-        [Header("체온 (실외 밤)")]
+        [Header("체온 (실외 밤에 하락, 그 외에는 서서히 회복)")]
         [SerializeField] private float nightOutdoorTemperatureDropPerHour = -8f;
+        [SerializeField] private float temperatureRecoveryPerHourOutdoorDay = 4f;
+        [SerializeField] private float temperatureRecoveryPerHourIndoor = 10f;
         [SerializeField] [Range(0, 23)] private int nightStartHour = 20;
         [SerializeField] [Range(0, 23)] private int nightEndHour = 6;
 
@@ -55,6 +57,8 @@ namespace Game.Survival
         public float BeastHandHungerMultiplier => beastHandHungerMultiplier;
 
         public float NightOutdoorTemperatureDropPerHour => nightOutdoorTemperatureDropPerHour;
+        public float TemperatureRecoveryPerHourOutdoorDay => temperatureRecoveryPerHourOutdoorDay;
+        public float TemperatureRecoveryPerHourIndoor => temperatureRecoveryPerHourIndoor;
         public int NightStartHour => nightStartHour;
         public int NightEndHour => nightEndHour;
 
@@ -71,6 +75,18 @@ namespace Game.Survival
             return nightStartHour > nightEndHour
                 ? (hour >= nightStartHour || hour < nightEndHour)
                 : (hour >= nightStartHour && hour < nightEndHour);
+        }
+
+        /// <summary>
+        /// 체온의 environment 모디파이어를 상황에 맞게 고른다 (ARCHITECTURE.md 4.3, PlayerSurvival이
+        /// HourPassed·MapChanged 때마다 다시 부른다). 실외 밤에는 내려가고, 그 외(실내·은신처, 실외 낮)에는
+        /// 서서히 올라간다 — 실제 값 변화는 SurvivalStat.Add의 clamp가 최대치에서 멈춘다.
+        /// </summary>
+        public StatModifier ComputeTemperatureModifier(bool isSafeFromWeather, int hour)
+        {
+            if (!isSafeFromWeather && IsNightHour(hour))
+                return StatModifier.Additive(nightOutdoorTemperatureDropPerHour);
+            return StatModifier.Additive(isSafeFromWeather ? temperatureRecoveryPerHourIndoor : temperatureRecoveryPerHourOutdoorDay);
         }
     }
 }
