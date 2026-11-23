@@ -1,5 +1,9 @@
 using System;
+using Game.Building;
+using Game.Crafting;
+using Game.Inventory;
 using Game.Maps;
+using Game.Player;
 using Game.Save;
 using Game.UI;
 using Game.World;
@@ -17,8 +21,17 @@ namespace Game.Core
         public static IWorldClock WorldClock { get; private set; }
         public static MapLoader MapLoader { get; private set; }
         public static TravelMenuUI TravelMenu { get; private set; }
+        public static PlayerInventory PlayerInventory { get; private set; }
+        public static PlayerInputReader PlayerInputReader { get; private set; }
         public static MapStateRegistry MapStateRegistry { get; private set; }
         public static SaveService SaveService { get; private set; }
+        public static StorageRegistry StorageRegistry { get; private set; }
+        public static HubStructureRegistry HubStructureRegistry { get; private set; }
+        public static HeatZoneRegistry HeatZoneRegistry { get; private set; }
+        public static BuildModeController BuildModeController { get; private set; }
+        public static StorageUI StorageUI { get; private set; }
+        public static CraftingUI CraftingUI { get; private set; }
+        public static SleepUI SleepUI { get; private set; }
         public static bool IsReady { get; private set; }
 
         /// <summary>모든 서비스 등록이 끝난 뒤 한 번 발행된다. 등록 순서와 무관하게 구독할 수 있다.</summary>
@@ -27,8 +40,27 @@ namespace Game.Core
         public static void RegisterWorldClock(IWorldClock clock) => WorldClock = clock;
         public static void RegisterMapLoader(MapLoader loader) => MapLoader = loader;
         public static void RegisterTravelMenu(TravelMenuUI menu) => TravelMenu = menu;
+
+        /// <summary>은신처 씬 등 다른 씬의 오브젝트가 플레이어를 계속(한 번이 아니라) 참조해야 할 때 쓴다
+        /// (예: BuildModeController). 대부분의 상호작용은 이것 대신 interactor 매개변수로 받는다.</summary>
+        public static void RegisterPlayer(PlayerInventory inventory, PlayerInputReader inputReader)
+        {
+            PlayerInventory = inventory;
+            PlayerInputReader = inputReader;
+        }
         public static void RegisterMapStateRegistry(MapStateRegistry registry) => MapStateRegistry = registry;
         public static void RegisterSaveService(SaveService service) => SaveService = service;
+        public static void RegisterStorageRegistry(StorageRegistry registry) => StorageRegistry = registry;
+        public static void RegisterHubStructureRegistry(HubStructureRegistry registry) => HubStructureRegistry = registry;
+        public static void RegisterHeatZoneRegistry(HeatZoneRegistry registry) => HeatZoneRegistry = registry;
+
+        /// <summary>은신처 씬에만 있는 컴포넌트라, 그 씬이 열려 있을 때만 OnEnable/OnDisable로 등록·해제한다
+        /// (다른 서비스들과 달리 Boot에서 한 번만 등록하지 않는다).</summary>
+        public static void RegisterBuildModeController(BuildModeController controller) => BuildModeController = controller;
+
+        public static void RegisterStorageUI(StorageUI ui) => StorageUI = ui;
+        public static void RegisterCraftingUI(CraftingUI ui) => CraftingUI = ui;
+        public static void RegisterSleepUI(SleepUI ui) => SleepUI = ui;
 
         public static void NotifyReady()
         {
@@ -46,8 +78,17 @@ namespace Game.Core
             WorldClock = null;
             MapLoader = null;
             TravelMenu = null;
+            PlayerInventory = null;
+            PlayerInputReader = null;
             MapStateRegistry = null;
             SaveService = null;
+            StorageRegistry = null;
+            HubStructureRegistry = null;
+            HeatZoneRegistry = null;
+            BuildModeController = null;
+            StorageUI = null;
+            CraftingUI = null;
+            SleepUI = null;
             IsReady = false;
             Ready = null;
         }

@@ -29,6 +29,13 @@ namespace Game.Player
         private InputAction hotbarPrevAction;
         private InputAction hotbarScrollAction;
         private InputAction useItemAction;
+        private InputAction toggleBuildModeAction;
+        private InputAction buildPlaceAction;
+        private InputAction buildDemolishAction;
+        private InputAction buildCursorMoveAction;
+        private InputAction pointerPositionAction;
+
+        private Camera mainCamera;
 
         // hotbarSlotActions마다 OnEnable/OnDisable에서 같은 델리게이트로 구독·해제해야 해서
         // (람다를 매번 새로 만들면 해제할 수 없다, .claude/rules/csharp.md) Awake에서 한 번 만들어 둔다.
@@ -43,6 +50,14 @@ namespace Game.Player
 
         /// <summary>마우스 휠 세로 값. 한 틱(한 칸)만큼만 오르내리고 다음 프레임에 0으로 돌아온다.</summary>
         public float HotbarScrollInput { get; private set; }
+
+        /// <summary>건설 모드에서 패드 왼쪽 스틱으로 커서를 움직일 때 쓴다. 잠금의 영향을 받지 않는다
+        /// (건설 모드 자체가 잠금을 걸기 때문).</summary>
+        public Vector2 BuildCursorMoveInput { get; private set; }
+
+        /// <summary>마우스 포인터의 월드 좌표 (건설 모드 커서용). Keyboard&amp;Mouse가 아니면 의미 없다.</summary>
+        public Vector2 PointerWorldPosition { get; private set; }
+
         public bool IsLocked => locked;
 
         /// <summary>마지막으로 입력을 보낸 장치의 컨트롤 스킴 ("Keyboard&Mouse" 또는 "Gamepad"). 상호작용
@@ -66,6 +81,16 @@ namespace Game.Player
         /// <summary>단축칸 선택 아이템 사용 (마우스 우클릭/F/패드 오른쪽 트리거, docs/design/GAME_DESIGN.md 3.1).</summary>
         public event Action UseItemPressed;
 
+        /// <summary>건설 모드 켜고 끄기 (B/패드 Start, docs/design/GAME_DESIGN.md 3.1). 잠금과 무관하게
+        /// 항상 발행한다 — 잠금을 거는 쪽이 건설 모드 자신이라 UICancel과 같은 예외다.</summary>
+        public event Action ToggleBuildModePressed;
+
+        /// <summary>건설 모드에서 설치(왼쪽 클릭/패드 버튼 South). 건설 모드가 아닐 때는 받는 쪽에서 무시한다.</summary>
+        public event Action BuildPlacePressed;
+
+        /// <summary>건설 모드에서 철거(오른쪽 클릭/패드 버튼 East).</summary>
+        public event Action BuildDemolishPressed;
+
         private void Awake()
         {
             if (actions == null)
@@ -87,6 +112,12 @@ namespace Game.Player
             hotbarPrevAction = map.FindAction("HotbarPrev", throwIfNotFound: true);
             hotbarScrollAction = map.FindAction("HotbarScroll", throwIfNotFound: true);
             useItemAction = map.FindAction("UseItem", throwIfNotFound: true);
+            toggleBuildModeAction = map.FindAction("ToggleBuildMode", throwIfNotFound: true);
+            buildPlaceAction = map.FindAction("BuildPlace", throwIfNotFound: true);
+            buildDemolishAction = map.FindAction("BuildDemolish", throwIfNotFound: true);
+            buildCursorMoveAction = map.FindAction("BuildCursorMove", throwIfNotFound: true);
+            pointerPositionAction = map.FindAction("PointerPosition", throwIfNotFound: true);
+            mainCamera = Camera.main;
 
             hotbarSlotActions = new InputAction[10];
             hotbarSlotHandlers = new Action<InputAction.CallbackContext>[10];
@@ -115,6 +146,11 @@ namespace Game.Player
             hotbarPrevAction.Enable();
             hotbarScrollAction.Enable();
             useItemAction.Enable();
+            toggleBuildModeAction.Enable();
+            buildPlaceAction.Enable();
+            buildDemolishAction.Enable();
+            buildCursorMoveAction.Enable();
+            pointerPositionAction.Enable();
 
             jumpAction.performed += HandleJumpPerformed;
             jumpAction.canceled += HandleJumpCanceled;
@@ -127,6 +163,9 @@ namespace Game.Player
             hotbarNextAction.performed += HandleHotbarNextPerformed;
             hotbarPrevAction.performed += HandleHotbarPrevPerformed;
             useItemAction.performed += HandleUseItemPerformed;
+            toggleBuildModeAction.performed += HandleToggleBuildModePerformed;
+            buildPlaceAction.performed += HandleBuildPlacePerformed;
+            buildDemolishAction.performed += HandleBuildDemolishPerformed;
 
             for (int i = 0; i < hotbarSlotActions.Length; i++)
             {
@@ -149,6 +188,9 @@ namespace Game.Player
             hotbarNextAction.performed -= HandleHotbarNextPerformed;
             hotbarPrevAction.performed -= HandleHotbarPrevPerformed;
             useItemAction.performed -= HandleUseItemPerformed;
+            toggleBuildModeAction.performed -= HandleToggleBuildModePerformed;
+            buildPlaceAction.performed -= HandleBuildPlacePerformed;
+            buildDemolishAction.performed -= HandleBuildDemolishPerformed;
 
             for (int i = 0; i < hotbarSlotActions.Length; i++)
             {
@@ -169,6 +211,11 @@ namespace Game.Player
             hotbarPrevAction.Disable();
             hotbarScrollAction.Disable();
             useItemAction.Disable();
+            toggleBuildModeAction.Disable();
+            buildPlaceAction.Disable();
+            buildDemolishAction.Disable();
+            buildCursorMoveAction.Disable();
+            pointerPositionAction.Disable();
         }
 
         private void Update()
@@ -179,6 +226,13 @@ namespace Game.Player
             InteractHeld = !locked && interactAction.IsPressed();
             UINavigateInput = uiNavigateAction.ReadValue<float>();
             HotbarScrollInput = locked ? 0f : hotbarScrollAction.ReadValue<float>();
+            BuildCursorMoveInput = buildCursorMoveAction.ReadValue<Vector2>();
+            if (mainCamera != null)
+            {
+                Vector2 screenPos = pointerPositionAction.ReadValue<Vector2>();
+                Vector3 world = mainCamera.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, -mainCamera.transform.position.z));
+                PointerWorldPosition = new Vector2(world.x, world.y);
+            }
 
             if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame) ActiveControlScheme = "Gamepad";
             else if (Keyboard.current != null && Keyboard.current.wasUpdatedThisFrame) ActiveControlScheme = "Keyboard&Mouse";
@@ -248,6 +302,24 @@ namespace Game.Player
         private void HandleUseItemPerformed(InputAction.CallbackContext context)
         {
             UseItemPressed?.Invoke();
+        }
+
+        /// <summary>건설 모드 자신이 잠금을 걸기 때문에 UICancel처럼 잠금과 무관하게 항상 발행한다.</summary>
+        private void HandleToggleBuildModePerformed(InputAction.CallbackContext context)
+        {
+            ToggleBuildModePressed?.Invoke();
+        }
+
+        /// <summary>건설 모드가 아닐 때 눌러도 해롭지 않다 — 받는 쪽(BuildModeController)이 활성 여부를
+        /// 직접 확인한다.</summary>
+        private void HandleBuildPlacePerformed(InputAction.CallbackContext context)
+        {
+            BuildPlacePressed?.Invoke();
+        }
+
+        private void HandleBuildDemolishPerformed(InputAction.CallbackContext context)
+        {
+            BuildDemolishPressed?.Invoke();
         }
 
         private void HandleUISubmitPerformed(InputAction.CallbackContext context)

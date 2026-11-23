@@ -20,6 +20,8 @@ namespace Game.Items
         [SerializeField] private HandRequirement requiredHand = HandRequirement.Any;
         [SerializeField] private bool isConsumable;
         [SerializeField] private ConsumableData consumable = new ConsumableData();
+        [SerializeField] private bool isTool;
+        [SerializeField] private ToolData tool = new ToolData();
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -32,5 +34,12 @@ namespace Game.Items
         /// <summary>단축칸 사용 키로 쓸 수 있는 아이템인지 (음식·물·의약품, docs/design/GAME_DESIGN.md 3.1).</summary>
         public bool IsConsumable => isConsumable;
         public ConsumableData Consumable => consumable;
+
+        /// <summary>도끼·곡괭이처럼 내구도가 있고 채집물 조건에 쓰이는 도구인지.</summary>
+        public bool IsTool => isTool;
+        public ToolData Tool => tool;
+
+        /// <summary>내구도나 연료가 있는 아이템은 겹쳐 쌓지 않는다 (ARCHITECTURE.md 4.4).</summary>
+        public int EffectiveMaxStackSize => isTool ? 1 : maxStackSize;
     }
 }

@@ -15,6 +15,9 @@ MonoBehaviour:
   id: oak_tree
   displayName: "\uCC38\uB098\uBB34"
   requiredHand: 2
+  requiredToolKind: 1
+  minToolTier: 1
+  toolDurabilityCostPerUse: 5
   holdSeconds: 1.5
   drops:
   - itemId: wood_log

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Core;
+using Game.Crafting;
 using Game.Items;
 using UnityEngine;
 
@@ -8,8 +9,9 @@ namespace Game.Inventory
     /// <summary>
     /// 플레이어가 들고 있는 InventoryModel과 아이템 정의(ItemDatabase)를 잇는다. 얻은 아이템은 바로
     /// 가방에 들어가고, 못 담으면 그만큼만 Pickup으로 땅에 떨어진다 (docs/design/GAME_DESIGN.md 7.1).
+    /// IMaterialSource를 구현해 제작·건설·수리가 가방을 보관함과 같은 방식으로 쓸 수 있게 한다.
     /// </summary>
-    public sealed class PlayerInventory : MonoBehaviour
+    public sealed class PlayerInventory : MonoBehaviour, IMaterialSource
     {
         [SerializeField] private ItemDatabase itemDatabase;
         [SerializeField] private Pickup pickupPrefab;
@@ -45,8 +47,9 @@ namespace Game.Inventory
                 long now = GameServices.WorldClock != null ? GameServices.WorldClock.TotalMinutes : 0;
                 spoilAt = now + def.Consumable.SpoilMinutes;
             }
+            int durability = def.IsTool ? def.Tool.MaxDurability : -1;
 
-            int leftover = Model.TryAdd(itemId, count, def.MaxStackSize, def.Weight, spoilAt);
+            int leftover = Model.TryAdd(itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAt, durability);
             if (leftover > 0) DropToGround(itemId, leftover);
         }
 
@@ -61,22 +64,26 @@ namespace Game.Inventory
             pickup.Initialize(itemId, count);
         }
 
-        public IEnumerable<(string itemId, int count, long spoilAtMinute)> EnumerateSlots()
+        public int CountOf(string itemId) => Model.CountOf(itemId);
+
+        public int Remove(string itemId, int count) => Model.Remove(itemId, count);
+
+        public IEnumerable<(string itemId, int count, long spoilAtMinute, int durability)> EnumerateSlots()
         {
             foreach (InventorySlot slot in Model.Slots)
-                if (slot != null && !slot.IsEmpty) yield return (slot.ItemId, slot.Count, slot.SpoilAtMinute);
+                if (slot != null && !slot.IsEmpty) yield return (slot.ItemId, slot.Count, slot.SpoilAtMinute, slot.Durability);
         }
 
         /// <summary>저장 파일에서 불러올 때 현재 가방을 비우고 그대로 다시 채운다.</summary>
-        public void RestoreSlots(IEnumerable<(string itemId, int count, long spoilAtMinute)> entries)
+        public void RestoreSlots(IEnumerable<(string itemId, int count, long spoilAtMinute, int durability)> entries)
         {
             Model.Clear();
             if (entries == null) return;
-            foreach ((string itemId, int count, long spoilAtMinute) in entries)
+            foreach ((string itemId, int count, long spoilAtMinute, int durability) in entries)
             {
                 ItemDefinition def = itemDatabase != null ? itemDatabase.Find(itemId) : null;
                 if (def == null) continue;
-                Model.TryAdd(itemId, count, def.MaxStackSize, def.Weight, spoilAtMinute);
+                Model.TryAdd(itemId, count, def.EffectiveMaxStackSize, def.Weight, spoilAtMinute, durability);
             }
         }
     }

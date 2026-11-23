@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 5617280217298151973}
   - component: {fileID: 8108732798405090114}
   - component: {fileID: 4780457631349387534}
+  - component: {fileID: 8082133330459989439}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -136,6 +137,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Player.PlayerInteractor
   inputReader: {fileID: 4376654180812441932}
   hands: {fileID: 7050079904660406002}
+  heldItem: {fileID: 8082133330459989439}
   promptUI: {fileID: 0}
   interactRadius: 1
 --- !u!114 &7050079904660406002
@@ -282,6 +284,21 @@ MonoBehaviour:
   itemDatabase: {fileID: 11400000, guid: e74f8465c2deb924e81ce52fbbafd73e, type: 2}
   survival: {fileID: 7323652339077693437}
   statusEffects: {fileID: 1446359830437764462}
+--- !u!114 &8082133330459989439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be87b031e9b81424095706efe1429978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Inventory.PlayerHeldItem
+  inventory: {fileID: 5480470572356274239}
+  hotbar: {fileID: 8108732798405090114}
+  itemDatabase: {fileID: 11400000, guid: e74f8465c2deb924e81ce52fbbafd73e, type: 2}
 --- !u!1 &7658787558271473459
 GameObject:
   m_ObjectHideFlags: 0

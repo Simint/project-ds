@@ -77,15 +77,16 @@ namespace Game.Core
         /// <summary>몸이 있는 캐릭터.</summary>
         public static LayerMask ActorMask => Cached(ref actorMask, Player, Enemy);
 
-        /// <summary>건설 시 셀이 막혔는지 확인할 대상.</summary>
-        public static LayerMask BuildBlockingMask => Cached(ref buildBlockingMask, Ground, Structure, Player, Enemy);
+        /// <summary>건설 시 셀이 막혔는지 확인할 대상. Interactable도 넣어 장애물(HubObstacle)·채집물·
+        /// 상자 위에는 못 짓게 한다 (MVP 5단계부터 실제로 쓰임).</summary>
+        public static LayerMask BuildBlockingMask => Cached(ref buildBlockingMask, Ground, Structure, Player, Enemy, Interactable);
 
         public static LayerMask InteractableMask => Cached(ref interactableMask, Interactable);
         public static LayerMask PickupMask => Cached(ref pickupMask, Pickup);
 
         public static bool IsInMask(int layer, LayerMask mask) => (mask.value & (1 << layer)) != 0;
 
-        private static LayerMask Cached(ref int cache, int a, int b = -1, int c = -1, int d = -1)
+        private static LayerMask Cached(ref int cache, int a, int b = -1, int c = -1, int d = -1, int e = -1)
         {
             if (cache == -1)
             {
@@ -94,6 +95,7 @@ namespace Game.Core
                 if (b >= 0) m |= 1 << b;
                 if (c >= 0) m |= 1 << c;
                 if (d >= 0) m |= 1 << d;
+                if (e >= 0) m |= 1 << e;
                 cache = m;
             }
             return cache;

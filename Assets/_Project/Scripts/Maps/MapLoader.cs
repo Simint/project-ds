@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Game.Building;
 using Game.Core;
 using Game.Inventory;
 using Game.Player;
@@ -33,6 +34,7 @@ namespace Game.Maps
 
         private IWorldClock worldClock;
         private MapStateRegistry mapStateRegistry;
+        private HubStructureRegistry hubStructureRegistry;
         private SaveService saveService;
         private Scene currentScene;
         private MapRoot currentRoot;
@@ -65,6 +67,7 @@ namespace Game.Maps
         {
             worldClock = GameServices.WorldClock;
             mapStateRegistry = GameServices.MapStateRegistry;
+            hubStructureRegistry = GameServices.HubStructureRegistry;
             saveService = GameServices.SaveService;
 
             MapDefinition target = startOverrideMap != null ? startOverrideMap : startMap;
@@ -153,6 +156,9 @@ namespace Game.Maps
             mapStateRegistry.Restore(currentRoot.Definition.Id, objects, worldClock?.TotalMinutes ?? 0);
         }
 
+        /// <summary>맵 이동 없이 저장해야 할 때(잠자기 등) 바깥에서 부른다.</summary>
+        public void SaveNow() => AutoSave();
+
         private void AutoSave()
         {
             if (saveService == null || mapStateRegistry == null || CurrentMap == null) return;
@@ -169,8 +175,11 @@ namespace Game.Maps
             };
 
             if (playerInventory != null)
-                foreach ((string itemId, int count, long spoilAtMinute) in playerInventory.EnumerateSlots())
-                    data.inventorySlots.Add(new InventorySlotData { itemId = itemId, count = count, spoilAtMinute = spoilAtMinute });
+                foreach ((string itemId, int count, long spoilAtMinute, int durability) in playerInventory.EnumerateSlots())
+                    data.inventorySlots.Add(new InventorySlotData { itemId = itemId, count = count, spoilAtMinute = spoilAtMinute, durability = durability });
+
+            if (hubStructureRegistry != null)
+                data.hubStructures = new List<StructureSaveData>(hubStructureRegistry.Current);
 
             if (playerSurvival != null)
                 foreach ((string id, float value) in playerSurvival.EnumerateStats())

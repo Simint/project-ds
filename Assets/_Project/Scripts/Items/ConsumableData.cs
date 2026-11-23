@@ -16,6 +16,7 @@ namespace Game.Items
         [SerializeField] private string spoiledItemId = "";
         [SerializeField] [Range(0f, 1f)] private float sicknessChance = 0f;
         [SerializeField] private string curesStatusEffectId = "";
+        [SerializeField] private string leavesContainerItemId = "";
 
         public StatRestoreAmount[] StatRestores => statRestores;
 
@@ -24,5 +25,9 @@ namespace Game.Items
         public string SpoiledItemId => spoiledItemId;
         public float SicknessChance => sicknessChance;
         public string CuresStatusEffectId => curesStatusEffectId;
+
+        /// <summary>생수병처럼 다 쓰면 빈 병 등 그릇이 남는 아이템에 쓴다. 비어 있으면 아무것도 남기지
+        /// 않는다 (docs/design/GAME_DESIGN.md 8 "물 담기").</summary>
+        public string LeavesContainerItemId => leavesContainerItemId;
     }
 }

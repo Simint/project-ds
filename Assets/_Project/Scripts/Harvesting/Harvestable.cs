@@ -1,5 +1,6 @@
 using Game.Core;
 using Game.Inventory;
+using Game.Items;
 using Game.Player;
 using Game.World;
 using UnityEngine;
@@ -8,10 +9,11 @@ namespace Game.Harvesting
 {
     /// <summary>
     /// 나무·덤불·잔해 더미 같은 채집물 (ARCHITECTURE.md 3.4, 4.2, add-harvestable 스킬). 완료되면
-    /// 정의된 아이템을 바로 플레이어 가방에 주고, 리스폰 일수가 지날 때까지 숨는다.
+    /// 정의된 아이템을 바로 플레이어 가방에 주고, 리스폰 일수가 지날 때까지 숨는다. 도구를 쓴 채집이면
+    /// 그 도구의 내구도를 깎는다(0이 되면 못 쓸 뿐 사라지지 않는다, docs/design/GAME_DESIGN.md 7).
     /// </summary>
     [RequireComponent(typeof(Collider2D), typeof(PersistentId))]
-    public sealed class Harvestable : MonoBehaviour, IInteractable, IPersistentObject
+    public sealed class Harvestable : MonoBehaviour, IInteractable, IPersistentObject, IToolGated
     {
         [SerializeField] private HarvestableDefinition definition;
         [SerializeField] private PersistentId persistentId;
@@ -51,8 +53,32 @@ namespace Game.Harvesting
                 if (count > 0) inventory.Collect(drop.ItemId, count);
             }
 
+            DamageHeldToolIfUsed(interactor);
+
             long nowMinute = GameServices.WorldClock != null ? GameServices.WorldClock.TotalMinutes : 0;
             SetDepleted(true, nowMinute);
+        }
+
+        /// <summary>도구로 캤으면(짐승 손이 아니라 사람 손으로, 맞는 도구를 들고) 그 도구의 내구도를 깎는다.</summary>
+        private void DamageHeldToolIfUsed(GameObject interactor)
+        {
+            if (definition.RequiredToolKind == ToolKind.None || definition.ToolDurabilityCostPerUse <= 0) return;
+            PlayerHeldItem heldItem = interactor != null ? interactor.GetComponentInParent<PlayerHeldItem>() : null;
+            if (heldItem == null) return;
+
+            InventorySlot selectedSlot = heldItem.SelectedSlot;
+            ItemDefinition selected = heldItem.SelectedDefinition;
+            if (selectedSlot == null || !AllowsWithTool(selected, selectedSlot.Durability)) return;
+
+            heldItem.Inventory.Model.DamageTool(heldItem.SelectedSlotIndex, definition.ToolDurabilityCostPerUse);
+        }
+
+        public bool AllowsWithTool(ItemDefinition selectedItem, int durability)
+        {
+            if (definition == null || definition.RequiredToolKind == ToolKind.None) return false;
+            if (selectedItem == null || !selectedItem.IsTool) return false;
+            if (durability == 0) return false; // 내구도가 다 닳으면 못 쓴다(부서지지는 않는다).
+            return selectedItem.Tool.Kind == definition.RequiredToolKind && selectedItem.Tool.Tier >= definition.MinToolTier;
         }
 
         public ObjectStateRecord Capture() => new ObjectStateRecord(depleted ? 1 : 0, respawnAtMinute, null);

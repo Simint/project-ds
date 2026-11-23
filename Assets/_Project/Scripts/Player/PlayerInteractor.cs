@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Core;
+using Game.Inventory;
 using Game.UI;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ namespace Game.Player
     {
         [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private PlayerHands hands;
+        [SerializeField] private PlayerHeldItem heldItem;
         [SerializeField] private InteractPromptUI promptUI;
         [SerializeField] private float interactRadius = 1f;
 
@@ -36,6 +38,7 @@ namespace Game.Player
             interactableFilter.useTriggers = true;
             if (inputReader == null) Debug.LogError("[PlayerInteractor] inputReader 참조가 비어 있습니다.", this);
             if (hands == null) Debug.LogError("[PlayerInteractor] hands 참조가 비어 있습니다.", this);
+            if (heldItem == null) Debug.LogError("[PlayerInteractor] heldItem 참조가 비어 있습니다.", this);
             if (promptUI == null) Debug.LogError("[PlayerInteractor] promptUI 참조가 비어 있습니다.", this);
         }
 
@@ -149,7 +152,7 @@ namespace Game.Player
                     interactableCache.Add(overlapCollider, candidate);
                 }
                 if (candidate == null) continue;
-                if (hands != null && !hands.AllowsHand(candidate.RequiredHand)) continue;
+                if (!IsAllowed(candidate)) continue;
                 float sqrDistance = ((Vector2)overlapResults[i].transform.position - (Vector2)transform.position).sqrMagnitude;
                 if (sqrDistance >= nearestSqrDistance) continue;
                 nearestSqrDistance = sqrDistance;
@@ -157,6 +160,18 @@ namespace Game.Player
                 nearestTransform = overlapResults[i].transform;
             }
             return (nearest, nearestTransform);
+        }
+
+        /// <summary>손 모드만으로 막히면, 사람 손이고 맞는 도구를 들고 있는지 한 번 더 물어본다
+        /// (IToolGated, docs/design/GAME_DESIGN.md 7.1 "짐승 손 또는 맞는 도구").</summary>
+        private bool IsAllowed(IInteractable candidate)
+        {
+            if (hands == null) return true;
+            if (hands.AllowsHand(candidate.RequiredHand)) return true;
+            if (hands.Mode != HandMode.Human || hands.IsTransitioning) return false;
+            if (heldItem == null || !(candidate is IToolGated toolGated)) return false;
+            int durability = heldItem.SelectedSlot?.Durability ?? -1;
+            return toolGated.AllowsWithTool(heldItem.SelectedDefinition, durability);
         }
     }
 }

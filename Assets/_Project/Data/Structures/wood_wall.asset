@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8e33df41d7e44441bcc260e1a0af9e8, type: 3}
+  m_Name: wood_wall
+  m_EditorClassIdentifier: Game.Runtime::Game.Building.StructureDefinition
+  id: wood_wall
+  displayName: "\uB098\uBB34 \uBCBD"
+  prefab: {fileID: 7352276291446850181, guid: cbd49df0aaad90249ab6694e51c53975, type: 3}
+  footprint: {x: 1, y: 2}
+  kind: 0
+  buildCost:
+  - itemId: wood_log
+    count: 3
+  station: 0
+  storageSlotCount: 0

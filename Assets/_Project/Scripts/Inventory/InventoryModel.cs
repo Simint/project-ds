@@ -38,7 +38,7 @@ namespace Game.Inventory
         /// 같은 itemId 스택부터 채우고, 남으면 빈 슬롯에 새로 쌓는다. 다 못 담으면 남은 개수를 돌려준다
         /// (호출한 쪽이 Pickup으로 땅에 떨어뜨린다, 7.1).
         /// </summary>
-        public int TryAdd(string itemId, int count, int maxStackSize, float unitWeight, long spoilAtMinute = 0)
+        public int TryAdd(string itemId, int count, int maxStackSize, float unitWeight, long spoilAtMinute = 0, int durability = -1)
         {
             if (string.IsNullOrEmpty(itemId) || count <= 0) return count;
             int remaining = count;
@@ -58,7 +58,7 @@ namespace Game.Inventory
             {
                 if (slots[i] != null && !slots[i].IsEmpty) continue;
                 int add = Math.Min(remaining, maxStackSize);
-                slots[i] = new InventorySlot(itemId, add, maxStackSize, unitWeight, spoilAtMinute);
+                slots[i] = new InventorySlot(itemId, add, maxStackSize, unitWeight, spoilAtMinute, durability);
                 remaining -= add;
             }
 
@@ -100,6 +100,26 @@ namespace Game.Inventory
             if (slot.IsEmpty) slots[slotIndex] = null;
             if (take > 0) Changed?.Invoke();
             return take;
+        }
+
+        /// <summary>도구 내구도를 깎는다(0 밑으로 내려가지 않음). 내구도가 없는 슬롯이면 아무 일도 안 한다.</summary>
+        public void DamageTool(int slotIndex, int amount)
+        {
+            if (slotIndex < 0 || slotIndex >= slots.Length) return;
+            InventorySlot slot = slots[slotIndex];
+            if (slot == null || slot.IsEmpty || slot.Durability < 0) return;
+            slot.SetDurability(Math.Max(0, slot.Durability - amount));
+            Changed?.Invoke();
+        }
+
+        /// <summary>작업대 수리: 내구도를 최대치로 채운다.</summary>
+        public void RepairTool(int slotIndex, int maxDurability)
+        {
+            if (slotIndex < 0 || slotIndex >= slots.Length) return;
+            InventorySlot slot = slots[slotIndex];
+            if (slot == null || slot.IsEmpty) return;
+            slot.SetDurability(maxDurability);
+            Changed?.Invoke();
         }
 
         public int CountOf(string itemId)

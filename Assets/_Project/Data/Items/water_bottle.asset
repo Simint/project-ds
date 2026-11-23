@@ -28,3 +28,9 @@ MonoBehaviour:
     spoiledItemId: 
     sicknessChance: 0
     curesStatusEffectId: 
+    leavesContainerItemId: empty_bottle
+  isTool: 0
+  tool:
+    kind: 0
+    tier: 0
+    maxDurability: 0

@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using Game.Building;
+using Game.Crafting;
 using Game.Inventory;
 using Game.Maps;
+using Game.Player;
 using Game.Save;
 using Game.Survival;
 using Game.UI;
@@ -20,8 +23,12 @@ namespace Game.Core
         [SerializeField] private MapLoader mapLoader;
         [SerializeField] private TravelMenuUI travelMenu;
         [SerializeField] private PlayerInventory playerInventory;
+        [SerializeField] private PlayerInputReader playerInputReader;
         [SerializeField] private PlayerSurvival playerSurvival;
         [SerializeField] private PlayerStatusEffects playerStatusEffects;
+        [SerializeField] private StorageUI storageUI;
+        [SerializeField] private CraftingUI craftingUI;
+        [SerializeField] private SleepUI sleepUI;
         [SerializeField] private MapDatabase mapDatabase;
 
         private void Awake()
@@ -30,36 +37,52 @@ namespace Game.Core
             if (mapLoader == null) Debug.LogError("[GameBootstrap] mapLoader 참조가 비어 있습니다.", this);
             if (travelMenu == null) Debug.LogError("[GameBootstrap] travelMenu 참조가 비어 있습니다.", this);
             if (playerInventory == null) Debug.LogError("[GameBootstrap] playerInventory 참조가 비어 있습니다.", this);
+            if (playerInputReader == null) Debug.LogError("[GameBootstrap] playerInputReader 참조가 비어 있습니다.", this);
             if (playerSurvival == null) Debug.LogError("[GameBootstrap] playerSurvival 참조가 비어 있습니다.", this);
             if (playerStatusEffects == null) Debug.LogError("[GameBootstrap] playerStatusEffects 참조가 비어 있습니다.", this);
+            if (storageUI == null) Debug.LogError("[GameBootstrap] storageUI 참조가 비어 있습니다.", this);
+            if (craftingUI == null) Debug.LogError("[GameBootstrap] craftingUI 참조가 비어 있습니다.", this);
+            if (sleepUI == null) Debug.LogError("[GameBootstrap] sleepUI 참조가 비어 있습니다.", this);
             if (mapDatabase == null) Debug.LogError("[GameBootstrap] mapDatabase 참조가 비어 있습니다.", this);
 
             GameServices.RegisterWorldClock(worldClock);
             GameServices.RegisterMapLoader(mapLoader);
             GameServices.RegisterTravelMenu(travelMenu);
+            GameServices.RegisterPlayer(playerInventory, playerInputReader);
+            GameServices.RegisterStorageUI(storageUI);
+            GameServices.RegisterCraftingUI(craftingUI);
+            GameServices.RegisterSleepUI(sleepUI);
 
             var mapStateRegistry = new MapStateRegistry();
             var saveService = new SaveService();
+            var storageRegistry = new StorageRegistry();
+            var hubStructureRegistry = new HubStructureRegistry();
+            var heatZoneRegistry = new HeatZoneRegistry();
             GameServices.RegisterMapStateRegistry(mapStateRegistry);
             GameServices.RegisterSaveService(saveService);
+            GameServices.RegisterStorageRegistry(storageRegistry);
+            GameServices.RegisterHubStructureRegistry(hubStructureRegistry);
+            GameServices.RegisterHeatZoneRegistry(heatZoneRegistry);
 
             WorldSaveData save = saveService.Load();
-            if (save != null) ApplySave(save, mapStateRegistry);
+            if (save != null) ApplySave(save, mapStateRegistry, hubStructureRegistry);
 
             GameServices.NotifyReady();
         }
 
-        private void ApplySave(WorldSaveData save, MapStateRegistry mapStateRegistry)
+        private void ApplySave(WorldSaveData save, MapStateRegistry mapStateRegistry, HubStructureRegistry hubStructureRegistry)
         {
             worldClock.SetTotalMinutes(save.clockTotalMinutes);
 
             if (playerInventory != null)
             {
-                var slots = new List<(string itemId, int count, long spoilAtMinute)>();
+                var slots = new List<(string itemId, int count, long spoilAtMinute, int durability)>();
                 foreach (InventorySlotData slot in save.inventorySlots)
-                    slots.Add((slot.itemId, slot.count, slot.spoilAtMinute));
+                    slots.Add((slot.itemId, slot.count, slot.spoilAtMinute, slot.durability));
                 playerInventory.RestoreSlots(slots);
             }
+
+            hubStructureRegistry.SetCurrent(save.hubStructures);
 
             if (playerSurvival != null)
             {

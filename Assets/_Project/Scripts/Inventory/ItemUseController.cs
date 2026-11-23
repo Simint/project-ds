@@ -87,6 +87,9 @@ namespace Game.Inventory
 
             if (statusEffects != null && def.Consumable.SicknessChance > 0f && Random.value < def.Consumable.SicknessChance)
                 statusEffects.Apply(StatusEffectIds.Sickness);
+
+            if (!string.IsNullOrEmpty(def.Consumable.LeavesContainerItemId))
+                inventory.Collect(def.Consumable.LeavesContainerItemId, 1);
         }
     }
 }

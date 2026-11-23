@@ -1,4 +1,5 @@
 using Game.Core;
+using Game.Inventory;
 using Game.Player;
 using Game.Survival;
 using UnityEngine;
@@ -6,8 +7,9 @@ using UnityEngine;
 namespace Game.Items
 {
     /// <summary>
-    /// 주택가의 더러운 물웅덩이 (docs/design/GAME_DESIGN.md 5.5, MVP 4단계). E 한 번으로 바로 마신다 —
-    /// 양이 줄지 않고 상태를 저장할 필요가 없어 IPersistentObject를 쓰지 않는다.
+    /// 주택가의 더러운 물웅덩이 (docs/design/GAME_DESIGN.md 5.5, 8). 빈 병을 들고 있으면 더러운
+    /// 물병을 채우고, 아니면(기존 동작 유지) 바로 마신다. E 한 번, 양이 줄지 않고 상태를 저장할
+    /// 필요가 없어 IPersistentObject를 쓰지 않는다.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public sealed class WaterSource : MonoBehaviour, IInteractable
@@ -29,6 +31,25 @@ namespace Game.Items
         {
             if (settings == null || interactor == null) return;
 
+            PlayerHeldItem heldItem = interactor.GetComponentInParent<PlayerHeldItem>();
+            if (heldItem != null && heldItem.SelectedDefinition != null && heldItem.SelectedDefinition.Id == WaterItemIds.EmptyBottle)
+            {
+                FillBottle(heldItem);
+                return;
+            }
+
+            DrinkDirectly(interactor);
+        }
+
+        private void FillBottle(PlayerHeldItem heldItem)
+        {
+            int taken = heldItem.Inventory.Model.RemoveFromSlot(heldItem.SelectedSlotIndex, 1);
+            if (taken <= 0) return;
+            heldItem.Inventory.Collect(isDirty ? WaterItemIds.DirtyWaterBottle : WaterItemIds.CleanWaterBottle, 1);
+        }
+
+        private void DrinkDirectly(GameObject interactor)
+        {
             PlayerSurvival survival = interactor.GetComponentInParent<PlayerSurvival>();
             if (survival == null)
             {

@@ -231,7 +231,13 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
   - 부패는 매 분 검사하지 않는다. 표시하거나 사용할 때 `spoilAtMinute`과 현재 시각을 비교한다 (lazy).
 - `InventoryModel`: 고정 슬롯 배열 + 장비 슬롯(머리·몸·손·가방·광원). 총 무게와 한도를 관리하고, 가방은 슬롯 수와 무게 한도를 늘린다. 추가·제거·이동은 이 클래스만 한다.
 - `RecipeDefinition`: 재료 목록, 결과물, 필요한 시설 종류(없으면 손 제작), `requiredHand`(대부분 Human)
-- 수리: 작업대 레시피의 한 종류로, 결과물 대신 대상의 내구도를 회복시킨다.
+- 수리: 작업대 레시피의 한 종류(`IsRepair`)로, 결과물 대신 대상의 내구도를 회복시킨다.
+- **재료 공급원(`IMaterialSource`, MVP 5단계):** 제작·건설·수리는 재료가 어디 있는지 몰라도 되게
+  `IMaterialSource`(`CountOf`/`Remove`) 하나로 다룬다. `PlayerInventory`와 보관함(`StorageContainer`)이
+  각각 구현하고, `MaterialSourceAggregator`가 은신처의 모든 보관함(`StorageRegistry`) + 가방을 하나로
+  묶는다. **뺄 때는 보관함을 먼저 쓰고, 모자란 만큼만 가방에서 뺀다** — 가방은 계속 채집하며 채워지는
+  공간이라 최대한 비워 두는 쪽이 유리하기 때문이다. 이 순서는 `MaterialSourceAggregator.Remove` 한
+  곳에만 있다.
 
 ### 4.5 건설·은신처 (`Building/`)
 

@@ -14,16 +14,22 @@ namespace Game.Inventory
         public float UnitWeight { get; }
         public long SpoilAtMinute { get; private set; }
 
+        /// <summary>내구도가 있는 도구만 쓴다. -1 = 내구도 없음(일반 재료·소비 아이템).</summary>
+        public int Durability { get; private set; }
+
         public bool IsEmpty => Count <= 0;
 
-        public InventorySlot(string itemId, int count, int maxStackSize, float unitWeight, long spoilAtMinute = 0)
+        public InventorySlot(string itemId, int count, int maxStackSize, float unitWeight, long spoilAtMinute = 0, int durability = -1)
         {
             ItemId = itemId;
             Count = count;
             MaxStackSize = maxStackSize;
             UnitWeight = unitWeight;
             SpoilAtMinute = spoilAtMinute;
+            Durability = durability;
         }
+
+        public void SetDurability(int value) => Durability = value;
 
         public int RemainingCapacity => MaxStackSize - Count;
 
@@ -45,6 +51,7 @@ namespace Game.Inventory
             ItemId = null;
             Count = 0;
             SpoilAtMinute = 0;
+            Durability = -1;
         }
     }
 }

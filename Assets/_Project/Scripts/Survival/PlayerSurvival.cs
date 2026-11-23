@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Game.Building;
 using Game.Core;
 using Game.Maps;
 using Game.Player;
@@ -27,6 +29,10 @@ namespace Game.Survival
         private MapLoader mapLoader;
         private SurvivalStats stats;
         private bool diedSignaled;
+
+        // 침대처럼 "HP 자연 회복만 더 빠르게" 하는 출처를 위한 자리. 허기·갈증처럼 Tick 기반 비율이
+        // 아니라 ApplyHealthRule의 회복 분기에서만 곱해지므로 SurvivalStats.SetModifier와는 따로 둔다.
+        private readonly Dictionary<string, float> hpRegenMultipliers = new Dictionary<string, float>();
 
         public SurvivalStats Stats => stats ??= new SurvivalStats(database);
 
@@ -98,13 +104,28 @@ namespace Game.Survival
             Stats.NotifyChanged();
         }
 
-        public void RestoreStats(System.Collections.Generic.IEnumerable<(string id, float value)> values) =>
+        public void RestoreStats(IEnumerable<(string id, float value)> values) =>
             Stats.RestoreValues(values);
 
-        public System.Collections.Generic.IEnumerable<(string id, float value)> EnumerateStats()
+        public IEnumerable<(string id, float value)> EnumerateStats()
         {
             foreach (SurvivalStat stat in Stats.All)
                 yield return (stat.Definition.Id, stat.Value);
+        }
+
+        /// <summary>침대에서 자는 동안처럼, HP 자연 회복 속도에만 곱해지는 배율을 등록·해제한다.</summary>
+        public void SetHpRegenMultiplier(string sourceKey, float multiplier) => hpRegenMultipliers[sourceKey] = multiplier;
+
+        public void ClearHpRegenMultiplier(string sourceKey) => hpRegenMultipliers.Remove(sourceKey);
+
+        private float HpRegenMultiplier
+        {
+            get
+            {
+                float result = 1f;
+                foreach (float value in hpRegenMultipliers.Values) result *= value;
+                return result;
+            }
         }
 
         private void HandleHandModeChanged(HandMode mode)
@@ -130,9 +151,17 @@ namespace Game.Survival
             RefreshTemperatureModifier();
         }
 
-        private void HandleMinutePassed() => TickGameTime(1f / 60f);
+        private void HandleMinutePassed()
+        {
+            TickGameTime(1f / 60f);
+            RefreshTemperatureModifier();
+        }
 
-        private void HandleAdvanced(long minutes) => TickGameTime(minutes / 60f);
+        private void HandleAdvanced(long minutes)
+        {
+            TickGameTime(minutes / 60f);
+            RefreshTemperatureModifier();
+        }
 
         private void HandleHourPassed() => RefreshTemperatureModifier();
 
@@ -164,7 +193,7 @@ namespace Game.Survival
             if (!starving && !freezing && !hasBleeding && !hasSickness
                 && (hunger == null || hunger.Value >= settings.HpRegenMinHunger)
                 && (thirst == null || thirst.Value >= settings.HpRegenMinThirst))
-                delta += settings.HpRegenPerHourWhenHealthy;
+                delta += settings.HpRegenPerHourWhenHealthy * HpRegenMultiplier;
 
             if (delta != 0f)
             {
@@ -193,10 +222,13 @@ namespace Game.Survival
             bool safe = mapLoader?.CurrentMap != null &&
                         (mapLoader.CurrentMap.IsIndoor || mapLoader.CurrentMap.Kind == MapKind.Hub);
             int hour = (int)(worldClock.TotalMinutes / 60 % 24);
+            float heatBonus = GameServices.HeatZoneRegistry != null
+                ? GameServices.HeatZoneRegistry.GetExtraRecoveryAt(transform.position)
+                : 0f;
 
             // 실외 밤이 아니면(실내·은신처, 실외 낮) 서서히 회복한다 — 최대치에서 멈추는 건
-            // SurvivalStat.Add의 clamp가 처리한다.
-            Stats.SetModifier(EnvironmentSource, StatIds.Temperature, settings.ComputeTemperatureModifier(safe, hour));
+            // SurvivalStat.Add의 clamp가 처리한다. 켜진 화로 근처면 heatBonus만큼 더 빠르다.
+            Stats.SetModifier(EnvironmentSource, StatIds.Temperature, settings.ComputeTemperatureModifier(safe, hour, heatBonus));
         }
     }
 }

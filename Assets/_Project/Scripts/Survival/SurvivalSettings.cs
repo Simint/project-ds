@@ -82,11 +82,12 @@ namespace Game.Survival
         /// HourPassed·MapChanged 때마다 다시 부른다). 실외 밤에는 내려가고, 그 외(실내·은신처, 실외 낮)에는
         /// 서서히 올라간다 — 실제 값 변화는 SurvivalStat.Add의 clamp가 최대치에서 멈춘다.
         /// </summary>
-        public StatModifier ComputeTemperatureModifier(bool isSafeFromWeather, int hour)
+        public StatModifier ComputeTemperatureModifier(bool isSafeFromWeather, int hour, float extraRecoveryPerHour = 0f)
         {
-            if (!isSafeFromWeather && IsNightHour(hour))
-                return StatModifier.Additive(nightOutdoorTemperatureDropPerHour);
-            return StatModifier.Additive(isSafeFromWeather ? temperatureRecoveryPerHourIndoor : temperatureRecoveryPerHourOutdoorDay);
+            float baseRate = !isSafeFromWeather && IsNightHour(hour)
+                ? nightOutdoorTemperatureDropPerHour
+                : (isSafeFromWeather ? temperatureRecoveryPerHourIndoor : temperatureRecoveryPerHourOutdoorDay);
+            return StatModifier.Additive(baseRate + extraRecoveryPerHour);
         }
     }
 }
