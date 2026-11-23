@@ -12,7 +12,13 @@ namespace Game.Save
     [Serializable]
     public sealed class WorldSaveData
     {
-        public int version = 1;
+        /// <summary>저장 형식이 바뀔 때마다 올린다 (ARCHITECTURE.md 4.10 "버전과 옛 저장 파일"). 2 =
+        /// MVP 4·5단계에서 늘어난 stats·statusEffects·durability·hubStructures. 옛 버전 파일을 불러올 때
+        /// 새로 생긴 필드는 JsonUtility가 C# 기본값으로 채운다(기본값으로 충분하지 않은 변경이면 그때
+        /// Save/Migrations/에 실제 변환 코드를 추가한다).</summary>
+        public const int CurrentVersion = 2;
+
+        public int version = CurrentVersion;
         public WorldSettings settings;
         public long clockTotalMinutes;
         public string currentMapId = "";

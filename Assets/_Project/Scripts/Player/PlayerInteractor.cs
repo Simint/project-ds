@@ -93,6 +93,7 @@ namespace Game.Player
                 holding = false;
                 holdElapsed = 0f;
                 currentTarget.Interact(gameObject);
+                RefreshPrompt(); // 대상의 안내 문구가 상호작용으로 바뀌었을 수 있다(문 열기/닫기 등).
                 promptUI?.SetProgress(0f);
             }
             else
@@ -109,6 +110,7 @@ namespace Game.Player
             if (currentTarget.HoldSecondsRequired <= 0f)
             {
                 currentTarget.Interact(gameObject);
+                RefreshPrompt(); // 대상의 안내 문구가 상호작용으로 바뀌었을 수 있다(문 열기/닫기 등).
                 return;
             }
             holding = true;

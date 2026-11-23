@@ -1,4 +1,5 @@
 using System.IO;
+using Game.Core;
 using UnityEngine;
 
 namespace Game.Save
@@ -26,13 +27,17 @@ namespace Game.Save
             File.WriteAllText(Path.Combine(saveDirectory, FileName), json);
         }
 
-        /// <summary>저장 파일이 없으면(첫 실행) null을 돌려준다.</summary>
+        /// <summary>저장 파일이 없으면(첫 실행) null을 돌려준다. 옛 버전 파일도 그대로 읽는다 — 새로
+        /// 생긴 필드는 JsonUtility가 C# 기본값으로 채운다 (WorldSaveData.CurrentVersion 참고).</summary>
         public WorldSaveData Load()
         {
             string path = Path.Combine(saveDirectory, FileName);
             if (!File.Exists(path)) return null;
             string json = File.ReadAllText(path);
-            return JsonUtility.FromJson<WorldSaveData>(json);
+            WorldSaveData data = JsonUtility.FromJson<WorldSaveData>(json);
+            if (data != null && data.version < WorldSaveData.CurrentVersion)
+                GameLog.Info("Save", $"옛 버전 저장 파일(v{data.version})을 불러와 기본값으로 채웠습니다 (현재 v{WorldSaveData.CurrentVersion}).");
+            return data;
         }
     }
 }

@@ -314,10 +314,14 @@ WorldSaveData (목표 스키마, 지금은 일부만 구현됨)
 └─ deathBag        { mapId, position, items } 또는 null
 ```
 
-3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. 손 모드·스탯·장비·내구도·hub·mapUnlocks·lore·사망 주머니는 해당 단계에서 필드를 추가하며 채운다.
+3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. `version 2`(4·5단계)에서 `stats`, `statusEffects`, `inventory.slots[].durability`, `hubStructures`가 늘었다. 손 모드·장비·hub의 나머지(파밍·전력)·mapUnlocks·lore·사망 주머니는 해당 단계에서 필드를 추가하며 채운다.
 
 - `JsonUtility` 또는 Newtonsoft로 `Application.persistentDataPath/saves/<slot>.json`에 저장한다.
-- 저장 구조를 바꾸면 `version`을 올리고 `Save/Migrations/`에 마이그레이션을 추가한다.
+
+**버전과 옛 저장 파일.** `WorldSaveData.CurrentVersion`을 저장 형식이 바뀔 때마다 올린다(필드를 추가·변경할 때마다 — 꼭 호환이 깨지는 변경이 아니어도). 옛 버전 파일을 불러올 때는:
+- 새로 생긴 필드는 `JsonUtility`가 C# 기본값으로 채운다(`durability = -1`, `List<T>`는 빈 리스트 등) — 이 기본값만으로 뜻이 통하는 한(문 닫힘=0, 내구도 없음=-1처럼) 추가 코드가 필요 없다.
+- `SaveService.Load()`가 `data.version < CurrentVersion`이면 `GameLog.Info`로 한 번 남긴다. 그 이상의 처리(별도 변환)는 하지 않는다.
+- 기본값만으로 뜻이 안 통하는 변경(필드 이름을 바꾸거나 구조를 재배치하는 경우)이 생기면 그때 `Save/Migrations/`에 `version`별 변환 코드를 추가한다. 지금까지는 전부 단순 필드 추가라 필요하지 않았다.
 
 ## 5. 성능 기준 (생존게임은 오브젝트가 많다)
 

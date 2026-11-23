@@ -66,7 +66,7 @@ namespace Game.Core
 
         // ---------------- Masks (처음 접근 시 한 번 계산, 이후 캐시) ----------------
         private static int groundCheckMask = -1, solidMask = -1, actorMask = -1,
-                           buildBlockingMask = -1, interactableMask = -1, pickupMask = -1;
+                           buildBlockingMask = -1, interactableMask = -1, pickupMask = -1, playerMask = -1;
 
         /// <summary>땅 판정: 서 있을 수 있는 모든 것.</summary>
         public static LayerMask GroundCheckMask => Cached(ref groundCheckMask, Ground, OneWayPlatform, Structure);
@@ -83,6 +83,9 @@ namespace Game.Core
 
         public static LayerMask InteractableMask => Cached(ref interactableMask, Interactable);
         public static LayerMask PickupMask => Cached(ref pickupMask, Pickup);
+
+        /// <summary>플레이어 몸만. 문이 닫히기 전 그 칸에 플레이어가 서 있는지 확인할 때 쓴다.</summary>
+        public static LayerMask PlayerMask => Cached(ref playerMask, Player);
 
         public static bool IsInMask(int layer, LayerMask mask) => (mask.value & (1 << layer)) != 0;
 
