@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Game.Player
 {
     /// <summary>
-    /// 걷기/달리기 프리셋 하나의 수평 이동 수치. PPU 16 기준으로 1타일 = 1유닛이라 타일/초 값을
-    /// 그대로 유닛/초로 쓴다 (RENDERING_RULES.md 1장, tune-movement 스킬).
+    /// 걷기/달리기 프리셋 하나의 수평 이동 수치. 1타일 = 1유닛이라 타일/초 값을 그대로 유닛/초로
+    /// 쓴다(PPU는 이미지 해상도일 뿐이라 이 단위 체계와 무관하다, RENDERING_RULES.md 1장, tune-movement 스킬).
     /// </summary>
     [Serializable]
     public sealed class MovementPreset

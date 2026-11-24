@@ -91,6 +91,7 @@ CinemachinePixelPerfect는 쓰지 않는다.
 - `PixelPerfectCamera`·`CinemachinePixelPerfect`는 쓰지 않는다. Main Camera는 화면 해상도 그대로 렌더링한다.
 - Orthographic Size는 5.625로 둬서 화면 세로 범위가 약 11.25유닛이 되게 한다(1장 기준).
 - 따라가기는 Cinemachine + `CinemachineConfiner2D`로 맵 밖을 비추지 않게 한다.
+- 화면 스페이스 UI(`CanvasScaler`)는 Scale With Screen Size, Reference 1920×1080, Match Height(`matchWidthOrHeight = 1`)로 둔다. 카메라가 세로만 고정하고(위) 가로는 화면 비율대로 늘어나는 것과 같은 축으로 맞춰, 와이드 화면에서 모서리 HUD가 카메라 프레이밍과 어긋나지 않게 한다.
 
 ## 6. 패럴랙스
 
