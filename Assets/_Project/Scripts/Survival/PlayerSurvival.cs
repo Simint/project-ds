@@ -19,6 +19,10 @@ namespace Game.Survival
         private const string HandModeSource = "hand_mode";
         private const string EnvironmentSource = "environment";
 
+        // ReviveHpFraction이 0이면(설정 누락 등) HP 0으로 부활해 다음 틱에 바로 재사망 판정이 나는
+        // 루프가 생긴다 — 그걸 막는 기술적 하한이라 밸런스 수치가 아니다.
+        private const float MinReviveHpFraction = 0.01f;
+
         [SerializeField] private SurvivalStatDatabase database;
         [SerializeField] private SurvivalSettings settings;
         [SerializeField] private PlayerHands hands;
@@ -101,7 +105,8 @@ namespace Game.Survival
         {
             SurvivalStat hp = Stats.Get(StatIds.Hp);
             if (hp == null) return;
-            hp.SetValue(hp.Definition.Max * (settings != null ? settings.ReviveHpFraction : 1f));
+            float fraction = settings != null ? settings.ReviveHpFraction : 1f;
+            hp.SetValue(hp.Definition.Max * Mathf.Max(fraction, MinReviveHpFraction));
             diedSignaled = false;
             Stats.NotifyChanged();
         }

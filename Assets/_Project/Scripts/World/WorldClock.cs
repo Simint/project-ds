@@ -43,6 +43,10 @@ namespace Game.World
 
         private void Update()
         {
+            // defaults가 비어 있으면 settings.RealSecondsPerDay가 0으로 남는다 — 나누기 전에 걸러서
+            // Infinity/NaN이 minuteAccumulator로 퍼지지 않게 한다.
+            if (settings.RealSecondsPerDay <= 0f) return;
+
             float gameMinutesPerRealSecond = MinutesPerDay / settings.RealSecondsPerDay;
             minuteAccumulator += Time.deltaTime * gameMinutesPerRealSecond;
             if (minuteAccumulator < 1f) return;
