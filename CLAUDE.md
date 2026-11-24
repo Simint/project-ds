@@ -9,17 +9,19 @@
 
 ### 비공개 서브모듈
 
-이 저장소(`Simint/project-ds`)는 공개 저장소다. 아래 세 폴더는 각각 비공개 저장소이고, git 서브모듈로 연결되어 있다.
+이 저장소(`Simint/project-ds`)는 공개 저장소다. 아래 네 폴더는 각각 비공개 저장소이고, git 서브모듈로 연결되어 있다.
 
 | 폴더 | 저장소 |
 |---|---|
 | `Assets/_Project/Art/` | `Simint/project-ds-art` |
 | `Assets/_Project/Audio/` | `Simint/project-ds-audio` |
+| `Assets/_Project/Data/` | `Simint/project-ds-data` |
 | `docs/design/` | `Simint/project-ds-design` |
 
-- 아트·오디오 파일과 그 `.meta`, 기획 문서는 **반드시 이 폴더 안에** 둔다. 이 폴더 밖에 두면 공개된다.
+- 아트·오디오 파일, 정의 데이터 에셋(ScriptableObject `.asset`), 그 `.meta`, 기획 문서는 **반드시 이 폴더 안에** 둔다. 이 폴더 밖에 두면 공개된다.
 - 이 폴더 안을 바꾸면 **서브모듈 안에서 먼저 커밋·push**하고, 바깥 저장소에서 서브모듈 포인터를 커밋한다.
 - 공개 저장소에 넣는 파일(코드, `docs/ARCHITECTURE.md`, CLAUDE.md, 스킬 등)에는 기획의 세부 내용(세계관, 스토리, 수치 밸런스)을 적지 않는다. 필요하면 `docs/design/`을 가리키기만 한다.
+- 밸런스 수치의 실제 값은 `Assets/_Project/Data/`의 에셋에만 둔다. 코드 필드 기본값, 테스트 상수, 공개 씬·프리팹의 인스펙터 값에 실제 값을 넣지 않는다(코드 기본값은 0이나 중립 값, 테스트는 임의 값).
 - 받는 법: `git clone --recurse-submodules`, 이미 받았다면 `git submodule update --init`
 
 ### 다른 에이전트(Codex)와 함께 쓰기

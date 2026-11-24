@@ -21,7 +21,7 @@ Assets/_Project/
 │   ├── Music/
 │   ├── SFX/
 │   └── Ambience/
-├── Data/               ScriptableObject 에셋 (정의 데이터)
+├── Data/               ※ 비공개 서브모듈 (Simint/project-ds-data) — ScriptableObject 에셋 (정의 데이터)
 │   ├── Items/
 │   ├── Recipes/
 │   ├── Harvestables/

@@ -35,7 +35,7 @@ Claude Code에서는 `.claude/settings.json`이 아래를 강제한다. Codex에
   - `Assets/**/*.unity`, `Assets/**/*.prefab`, `Assets/**/*.meta`
   - `Assets/_Project/Editor/Harness/**`
   - `harness.config.json`
-- **비공개 서브모듈 경계:** 이 저장소는 공개다. 아트·오디오·기획 파일은 `Assets/_Project/Art/`, `Assets/_Project/Audio/`, `docs/design/` 밖에 두지 않는다. 공개 파일과 커밋 메시지에 기획 세부를 쓰지 않는다 (`CLAUDE.md`의 "비공개 서브모듈" 절).
+- **비공개 서브모듈 경계:** 이 저장소는 공개다. 아트·오디오·정의 데이터 에셋·기획 파일은 `Assets/_Project/Art/`, `Assets/_Project/Audio/`, `Assets/_Project/Data/`, `docs/design/` 밖에 두지 않는다. 공개 파일과 커밋 메시지에 기획 세부를 쓰지 않는다 (`CLAUDE.md`의 "비공개 서브모듈" 절).
 
 ## 4. 스킬
 

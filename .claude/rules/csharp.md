@@ -58,7 +58,7 @@ paths:
 - Animator 파라미터는 `static readonly int Speed = Animator.StringToHash("Speed");`로 캐시한다.
 
 ## 수치와 이름
-- 밸런스 수치(체력, 피해, 감소량, 시간)는 코드에 쓰지 않고 ScriptableObject 정의에 둔다. 코드 상수는 기술 값(버퍼 크기 등)만. 공개 저장소에 밸런스가 노출되지 않게 하는 목적도 있다.
+- 밸런스 수치(체력, 피해, 감소량, 시간)는 코드에 쓰지 않고 ScriptableObject 정의에 둔다. 코드 상수는 기술 값(버퍼 크기 등)만. 공개 저장소에 밸런스가 노출되지 않게 하는 목적도 있다. SO 에셋은 비공개 서브모듈 `Assets/_Project/Data/`에 있으므로, SO 클래스의 필드 기본값은 0이나 중립 값으로 두고 테스트도 실제 값이 아닌 임의 값을 쓴다.
 - private 필드는 접두사 없는 `camelCase` (`moveSpeed`). 매개변수와 겹치면 `this.`를 쓴다. 직렬화 필드 이름을 바꿀 때는 `[FormerlySerializedAs("old")]`를 단다.
 - bool은 `is/has/can`으로 시작 (`isGrounded`, `hasKey`).
 

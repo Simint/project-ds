@@ -7,3 +7,6 @@
 [submodule "docs/design"]
 	path = docs/design
 	url = https://github.com/Simint/project-ds-design.git
+[submodule "Assets/_Project/Data"]
+	path = Assets/_Project/Data
+	url = https://github.com/Simint/project-ds-data.git
