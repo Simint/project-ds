@@ -35,7 +35,7 @@ description: 횡스크롤 플레이어의 이동·점프·낙하 느낌을 조�
 | 타일 이음새에 걸림 | 타일마다 개별 콜라이더 | 지형 타일맵에 `CompositeCollider2D` (Outlines), 플레이어는 Capsule |
 | 발판 끝에서 점프가 씹힘 | 코요테 타임 없음 | `coyoteTime` |
 | 착지 직전 점프가 씹힘 | 점프 버퍼 없음 | `jumpBuffer` |
-| 화면이 떨림 | 보간 없음 / 픽셀 스냅 충돌 | Rigidbody2D Interpolate, Cinemachine Pixel Perfect |
+| 화면이 떨림 | 보간 없음 | Rigidbody2D Interpolate, Cinemachine Damping 조정 |
 | 경사로에서 미끄러짐 | 정지 시 중력 | 땅 위·입력 없음이면 경사 방향 속도 0, 또는 경사 없이 계단식 지형 |
 | 일방 발판에서 내려가기 안 됨 | 미구현 | 아래+점프 시 0.25초간 해당 발판 콜라이더와 충돌 무시 (`Physics2D.IgnoreCollision`) |
 

@@ -48,7 +48,7 @@ Claude Code에서는 `.claude/settings.json`이 아래를 강제한다. Codex에
 
 - `python tools/harness/sync_agent_skills.py --check`는 두 폴더가 어긋났는지만 확인한다 (어긋나면 종료 코드 1).
 - `CLAUDE.md`의 "작업 절차"에 적힌 스킬(`add-harvestable`, `add-structure`, `add-item`, `add-survival-stat`, `tune-movement`, `debug-layering`)을 같은 상황에서 쓴다.
-- Claude Code 플러그인 스킬(`unity:2d-pixel-perfect` 등)은 Codex에 없다.
+- Claude Code 플러그인 스킬(`unity:create-2d-physics` 등)은 Codex에 없다.
 
 ## 5. 리뷰어 서브에이전트
 

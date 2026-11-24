@@ -38,6 +38,14 @@ class Config:
         return int(self.data.get("pixelsPerUnit", 16))
 
     @property
+    def filter_mode(self) -> str:
+        return self.data.get("filterMode", "Bilinear")
+
+    @property
+    def screen_vertical_units(self) -> float:
+        return float(self.data.get("screenVerticalUnits", 11.25))
+
+    @property
     def art_root(self) -> str:
         return self.data.get("artRoot", "Assets/_Project/Art").rstrip("/")
 

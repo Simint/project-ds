@@ -9,9 +9,9 @@ namespace Game.Editor.Harness
     public sealed class HarnessConfig
     {
         public string view = "SideScroller";
-        public int tilePixelSize = 16;
         public int pixelsPerUnit = 16;
-        public int[] referenceResolution = { 480, 270 };
+        public float screenVerticalUnits = 11.25f;
+        public string filterMode = "Bilinear";
         public string artRoot = "Assets/_Project/Art";
         public string[] bottomPivotFolders = Array.Empty<string>();
         public string[] sortingLayers = Array.Empty<string>();
@@ -48,6 +48,13 @@ namespace Game.Editor.Harness
             }
             return cached;
         }
+
+        public FilterMode ResolvedFilterMode => filterMode switch
+        {
+            "Point" => UnityEngine.FilterMode.Point,
+            "Trilinear" => UnityEngine.FilterMode.Trilinear,
+            _ => UnityEngine.FilterMode.Bilinear,
+        };
 
         public static string Normalize(string assetPath) => assetPath.Replace('\\', '/').TrimEnd('/');
 

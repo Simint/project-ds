@@ -5,13 +5,20 @@
 
 ## 1. 기본 수치
 
+**도트풍 일반 2D 렌더링**이다 (진짜 도트/Pixel Perfect가 아니다, `docs/design/GAME_DESIGN.md` 3.0절). 화면은
+모니터 해상도로 그대로 그리고, 확대해 둔 도트 그림을 크기만 맞춰 넣는다. Pixel Perfect Camera·
+CinemachinePixelPerfect는 쓰지 않는다.
+
 | 항목 | 값 |
 |---|---|
-| 타일 크기 | 16×16 px |
-| Pixels Per Unit | 16 (타일 1칸 = 1 유닛) |
-| Pixel Perfect Camera Reference Resolution | 320×180 (16:9, 정수배 업스케일) |
+| 1유닛(타일 1칸) 그림 크기 | 128×128 px (캐릭터는 2유닛 = 높이 256px) |
+| Pixels Per Unit | 128 |
+| 화면에 보이는 범위(세로) | 약 11.25유닛 (Orthographic Size 5.625) — 정수배 업스케일 없이 그대로 |
+| 텍스처 필터 | 기본 **Bilinear** (`harness.config.json`의 `filterMode`. Point로 바꿔 비교해 볼 수 있다) |
 | 렌더 파이프라인 | URP, 2D Renderer |
 | Transparency Sort Mode | **Default** (Custom Axis 금지) |
+
+수치의 원본은 `harness.config.json`의 `pixelsPerUnit`·`screenVerticalUnits`·`filterMode`다.
 
 ## 2. Sorting Layer (뒤 → 앞)
 
@@ -72,23 +79,23 @@
 `Assets/_Project/Art/` 아래 모든 텍스처는 다음을 따른다 (에디터의 `PixelArtImportEnforcer`가 자동 적용, `tools/harness/validate.py`가 검사).
 
 - Texture Type: Sprite (2D and UI)
-- Pixels Per Unit: 16
-- Filter Mode: **Point (no filter)**
+- Pixels Per Unit: 128
+- Filter Mode: `harness.config.json`의 `filterMode` 기준 (기본 **Bilinear**)
 - Compression: **None**
 - Generate Mip Maps: 끔
 - 피벗: `Characters`, `Props`, `Structures` 폴더는 **Bottom Center**(발밑). 타일과 배경은 Center.
-- 스프라이트 시트는 Sprite Mode = Multiple, Grid by Cell Size 16×16(또는 캐릭터 프레임 크기)로 자른다.
+- 스프라이트 시트는 Sprite Mode = Multiple, Grid by Cell Size 128×128(또는 캐릭터 프레임 크기, 1유닛=128px 기준의 배수)로 자른다.
 
 ## 5. 카메라
 
-- Main Camera에 `PixelPerfectCamera` (Assets PPU 16, Reference 320×180, Crop Frame None, Grid Snapping = Upscale Render Texture 또는 Pixel Snapping).
-- 따라가기는 Cinemachine + `CinemachinePixelPerfect` 확장 + `CinemachineConfiner2D`로 맵 밖을 비추지 않게 한다.
-- 2D 조명을 쓸 때 빛이 매끈한 그라데이션으로 보이면 Upscale Render Texture를 켠다.
+- `PixelPerfectCamera`·`CinemachinePixelPerfect`는 쓰지 않는다. Main Camera는 화면 해상도 그대로 렌더링한다.
+- Orthographic Size는 5.625로 둬서 화면 세로 범위가 약 11.25유닛이 되게 한다(1장 기준).
+- 따라가기는 Cinemachine + `CinemachineConfiner2D`로 맵 밖을 비추지 않게 한다.
 
 ## 6. 패럴랙스
 
 - `Sky`, `FarBackground`, `Background`는 카메라 이동량에 계수를 곱해 움직인다. 예: Sky 0.95, FarBackground 0.8, Background 0.4~0.0.
-- 패럴랙스 레이어 위치는 **최종 위치를 1/PPU 단위로 스냅**한다. 스냅하지 않으면 픽셀이 떨린다.
+- Pixel Perfect Camera를 쓰지 않으므로(1장) 위치를 격자에 스냅하지 않는다. 매끄럽게 그대로 움직인다.
 - `Props`, `Terrain`, `Entities`, `Foreground`는 패럴랙스 계수 0 (월드에 고정). 전경에 약한 역방향 패럴랙스를 주고 싶으면 Foreground만 예외로 -0.1 정도까지 허용한다.
 
 ## 7. 전경 가림 처리

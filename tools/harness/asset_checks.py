@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Tuple
 from common import ERROR, WARN, Config, Finding, read_text
 
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".tga", ".gif", ".bmp"}
+FILTER_MODE_CODES = {"Point": 0, "Bilinear": 1, "Trilinear": 2}
 CLASS_GAMEOBJECT = "1"
 CLASS_SPRITE_RENDERER = "212"
 CLASS_TILEMAP_RENDERER = "483"
@@ -46,8 +47,10 @@ def check_texture_meta(meta: Path, cfg: Config) -> List[Finding]:
     if tt and tt[0] != 8:
         add(ERROR, "HX101", tt[1], f"Texture Type이 Sprite가 아님 (textureType={tt[0]}, Sprite=8).")
     fm = _int(r"^\s*filterMode:\s*(-?\d+)", text)
-    if fm and fm[0] != 0:
-        add(ERROR, "HX102", fm[1], f"Filter Mode가 Point가 아님 (filterMode={fm[0]}). 픽셀이 뭉개집니다.")
+    expected_fm = FILTER_MODE_CODES.get(cfg.filter_mode, 1)
+    if fm and fm[0] != expected_fm:
+        add(ERROR, "HX102", fm[1],
+            f"Filter Mode={fm[0]}, 기준은 harness.config.json filterMode='{cfg.filter_mode}'({expected_fm}).")
     mm = _int(r"^\s*enableMipMap:\s*(\d+)", text)
     if mm and mm[0] != 0:
         add(WARN, "HX103", mm[1], "Mip Map이 켜져 있음. 픽셀 아트는 끄세요.")

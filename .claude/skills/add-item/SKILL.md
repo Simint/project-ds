@@ -8,7 +8,7 @@ description: 새 아이템(재료, 도구, 무기, 음식, 설치형 아이템)�
 ## 1. ItemDefinition
 `Assets/_Project/Data/Items/<id>.asset`
 - `id`: 소문자 스네이크 (`wood_log`, `stone_axe`, `cooked_meat`). **저장 파일이 이 값을 쓰므로 한 번 정하면 바꾸지 않는다.** 이름을 바꾸고 싶으면 `displayName`만 바꾼다.
-- `displayName`, `description`, `icon` (Art/Items, 16×16, Center 피벗)
+- `displayName`, `description`, `icon` (Art/Items, 128×128, Center 피벗)
 - `maxStack`: 재료 99, 도구·무기 1, 음식 20 기본
 - `category`: Material / Tool / Weapon / Food / Placeable / Misc
 - 선택 데이터 (해당하는 것만 채운다)

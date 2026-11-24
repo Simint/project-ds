@@ -5,7 +5,7 @@ namespace Game.Editor.Harness
 {
     /// <summary>
     /// harness.config.json의 artRoot 아래 텍스처에 픽셀 아트 임포트 설정을 강제한다.
-    /// - 항상 강제: Sprite 타입, Point 필터, 압축 없음, Mip Map 끔
+    /// - 항상 강제: Sprite 타입, filterMode 설정값(기본 Bilinear), 압축 없음, Mip Map 끔
     /// - 처음 임포트할 때만: PPU, Wrap Mode, 피벗(bottomPivotFolders면 Bottom Center)
     ///   → 사람이 나중에 Sprite Editor에서 바꾼 피벗/PPU를 덮어쓰지 않는다.
     /// </summary>
@@ -22,7 +22,7 @@ namespace Game.Editor.Harness
             bool firstImport = importer.importSettingsMissing;
 
             importer.textureType = TextureImporterType.Sprite;
-            importer.filterMode = FilterMode.Point;
+            importer.filterMode = cfg.ResolvedFilterMode;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.mipmapEnabled = false;
             importer.alphaIsTransparency = true;
