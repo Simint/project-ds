@@ -101,7 +101,7 @@ namespace Game.Survival
         {
             SurvivalStat hp = Stats.Get(StatIds.Hp);
             if (hp == null) return;
-            hp.SetValue(hp.Definition.Max * (settings != null ? settings.ReviveHpFraction : 0.5f));
+            hp.SetValue(hp.Definition.Max * (settings != null ? settings.ReviveHpFraction : 1f));
             diedSignaled = false;
             Stats.NotifyChanged();
         }

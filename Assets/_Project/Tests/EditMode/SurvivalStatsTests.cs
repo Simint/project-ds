@@ -93,10 +93,10 @@ public sealed class SurvivalStatsTests
         SurvivalStatDefinition temperature = MakeDefinition("temperature", 0f, 100f, 100f, 0f);
         var stats = new SurvivalStats(MakeDatabase(temperature));
 
-        stats.SetModifier("environment", "temperature", StatModifier.Additive(-8f));
+        stats.SetModifier("environment", "temperature", StatModifier.Additive(-3f));
         stats.Tick(2f);
 
-        Assert.AreEqual(84f, stats.Get("temperature").Value, 0.001f);
+        Assert.AreEqual(94f, stats.Get("temperature").Value, 0.001f);
     }
 
     [Test]

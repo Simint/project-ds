@@ -16,14 +16,14 @@ namespace Game.Player
         [SerializeField] private MovementPreset beastRun = new MovementPreset();
 
         [Header("점프")]
-        [SerializeField] private float airControl = 0.7f;
-        [SerializeField] private float jumpHeightTiles = 3.2f;
-        [SerializeField] private float timeToApexSeconds = 0.38f;
-        [SerializeField] private float fallGravityMultiplier = 1.8f;
-        [SerializeField] private float jumpCutMultiplier = 0.5f;
-        [SerializeField] private float maxFallSpeedTiles = 18f;
-        [SerializeField] private float coyoteTimeSeconds = 0.1f;
-        [SerializeField] private float jumpBufferSeconds = 0.1f;
+        [SerializeField] private float airControl = 0f;
+        [SerializeField] private float jumpHeightTiles = 0f;
+        [SerializeField] private float timeToApexSeconds = 1f;
+        [SerializeField] private float fallGravityMultiplier = 0f;
+        [SerializeField] private float jumpCutMultiplier = 0f;
+        [SerializeField] private float maxFallSpeedTiles = 0f;
+        [SerializeField] private float coyoteTimeSeconds = 0f;
+        [SerializeField] private float jumpBufferSeconds = 0f;
 
         public MovementPreset Walk => walk;
         public MovementPreset Run => run;

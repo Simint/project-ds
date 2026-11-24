@@ -6,7 +6,7 @@ namespace Game.Player
     [CreateAssetMenu(menuName = "Game/Player/Hand Settings")]
     public sealed class PlayerHandSettings : ScriptableObject
     {
-        [SerializeField] private float transitionSeconds = 0.25f;
+        [SerializeField] private float transitionSeconds = 0f;
 
         [Header("임시 그림 색 (그림이 나오기 전까지)")]
         [SerializeField] private Color humanColor = new Color(0.2f, 0.6f, 1f);

@@ -139,7 +139,7 @@ MonoBehaviour:
   hands: {fileID: 7050079904660406002}
   heldItem: {fileID: 8082133330459989439}
   promptUI: {fileID: 0}
-  interactRadius: 1
+  settings: {fileID: 11400000, guid: f5fae212dfdd4205abf5db30eed7e47e, type: 2}
 --- !u!114 &7050079904660406002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,8 +186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Runtime::Game.Inventory.PlayerInventory
   itemDatabase: {fileID: 11400000, guid: e74f8465c2deb924e81ce52fbbafd73e, type: 2}
   pickupPrefab: {fileID: 8657213249867274546, guid: f3e402e4e159b1d40972f2ccf3813b2b, type: 3}
-  slotCount: 20
-  weightLimit: 50
+  settings: {fileID: 11400000, guid: d1a155bffccf4c1fbe2e43e07bd26cad, type: 2}
 --- !u!114 &7323652339077693437
 MonoBehaviour:
   m_ObjectHideFlags: 0

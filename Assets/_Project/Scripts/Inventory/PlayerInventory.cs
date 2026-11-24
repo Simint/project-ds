@@ -15,19 +15,19 @@ namespace Game.Inventory
     {
         [SerializeField] private ItemDatabase itemDatabase;
         [SerializeField] private Pickup pickupPrefab;
-        [SerializeField] private int slotCount = 20;
-        [SerializeField] private float weightLimit = 50f;
+        [SerializeField] private PlayerInventorySettings settings;
 
         private InventoryModel model;
 
         // GameBootstrap이 Awake에서 저장 파일을 곧바로 복원하므로, 다른 컴포넌트의 Awake 순서에
         // 기대지 않도록 처음 접근하는 시점에 만든다 (직렬화 필드는 Awake 전에 이미 채워져 있다).
-        public InventoryModel Model => model ??= new InventoryModel(slotCount);
-        public float WeightLimit => weightLimit;
+        public InventoryModel Model => model ??= new InventoryModel(settings != null ? settings.SlotCount : 0);
+        public float WeightLimit => settings != null ? settings.WeightLimit : 0f;
 
         private void Awake()
         {
             if (itemDatabase == null) Debug.LogError("[PlayerInventory] itemDatabase 참조가 비어 있습니다.", this);
+            if (settings == null) Debug.LogError("[PlayerInventory] settings 참조가 비어 있습니다.", this);
         }
 
         /// <summary>갓 얻은 아이템을 가방에 넣는다(부패 시각·내구도를 새로 계산한다). 다 못 담으면 남은

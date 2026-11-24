@@ -18,7 +18,7 @@ namespace Game.Player
         [SerializeField] private PlayerHands hands;
         [SerializeField] private PlayerHeldItem heldItem;
         [SerializeField] private InteractPromptUI promptUI;
-        [SerializeField] private float interactRadius = 1f;
+        [SerializeField] private PlayerInteractionSettings settings;
 
         private readonly Collider2D[] overlapResults = new Collider2D[8];
         private readonly Dictionary<Collider2D, IInteractable> interactableCache = new Dictionary<Collider2D, IInteractable>();
@@ -40,6 +40,7 @@ namespace Game.Player
             if (hands == null) Debug.LogError("[PlayerInteractor] hands 참조가 비어 있습니다.", this);
             if (heldItem == null) Debug.LogError("[PlayerInteractor] heldItem 참조가 비어 있습니다.", this);
             if (promptUI == null) Debug.LogError("[PlayerInteractor] promptUI 참조가 비어 있습니다.", this);
+            if (settings == null) Debug.LogError("[PlayerInteractor] settings 참조가 비어 있습니다.", this);
         }
 
         private void OnEnable()
@@ -141,7 +142,8 @@ namespace Game.Player
 
         private (IInteractable, Transform) FindNearestInteractable()
         {
-            int count = Physics2D.OverlapCircle(transform.position, interactRadius, interactableFilter, overlapResults);
+            float radius = settings != null ? settings.InteractRadius : 0f;
+            int count = Physics2D.OverlapCircle(transform.position, radius, interactableFilter, overlapResults);
             IInteractable nearest = null;
             Transform nearestTransform = null;
             float nearestSqrDistance = float.MaxValue;

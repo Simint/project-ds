@@ -15,8 +15,9 @@ namespace Game.World
         /// <summary>하루는 항상 게임 내 1440분(24시간)이다. 바꿀 수 있는 건 하루가 현실로 몇 초인지뿐이다.</summary>
         public const int MinutesPerDay = 1440;
 
+        [SerializeField] private WorldClockDefaults defaults;
         [SerializeField] private WorldSettings settings = new WorldSettings();
-        [SerializeField] private long startMinutes = 8 * 60;
+        [SerializeField] private long startMinutes = 0;
 
         private long totalMinutes;
         private float minuteAccumulator;
@@ -31,6 +32,12 @@ namespace Game.World
 
         private void Awake()
         {
+            if (defaults == null) Debug.LogError("[WorldClock] defaults 참조가 비어 있습니다.", this);
+            else
+            {
+                settings = new WorldSettings(defaults.DifficultyId, defaults.SeasonLengthDays, defaults.RealSecondsPerDay);
+                startMinutes = defaults.StartMinutes;
+            }
             totalMinutes = startMinutes;
         }
 

@@ -1182,11 +1182,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a02e51ce86ee46643af307ab9ecc4d9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.World.WorldClock
+  defaults: {fileID: 11400000, guid: b5d610fc0c064967b61cd31b6c3b38d7, type: 2}
   settings:
-    difficultyId: normal
-    seasonLengthDays: 10
-    realSecondsPerDay: 1200
-  startMinutes: 480
+    difficultyId:
+    seasonLengthDays: 0
+    realSecondsPerDay: 0
+  startMinutes: 0
 --- !u!4 &613839619
 Transform:
   m_ObjectHideFlags: 0

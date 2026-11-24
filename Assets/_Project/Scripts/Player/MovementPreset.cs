@@ -10,9 +10,9 @@ namespace Game.Player
     [Serializable]
     public sealed class MovementPreset
     {
-        [SerializeField] private float maxSpeedTiles = 4f;
-        [SerializeField] private float accelSeconds = 0.08f;
-        [SerializeField] private float decelSeconds = 0.06f;
+        [SerializeField] private float maxSpeedTiles = 0f;
+        [SerializeField] private float accelSeconds = 0f;
+        [SerializeField] private float decelSeconds = 0f;
 
         public float MaxSpeedTiles => maxSpeedTiles;
         public float AccelSeconds => accelSeconds;

@@ -10,37 +10,37 @@ namespace Game.Survival
     public sealed class SurvivalSettings : ScriptableObject
     {
         [Header("HP 감소·회복 (허기·갈증·체온)")]
-        [SerializeField] private float hpDrainPerHourWhenStarving = -4f;
-        [SerializeField] private float hpDrainPerHourWhenCold = -4f;
-        [SerializeField] private float hpRegenPerHourWhenHealthy = 2f;
-        [SerializeField] private float hpRegenMinHunger = 50f;
-        [SerializeField] private float hpRegenMinThirst = 50f;
-        [SerializeField] [Range(0f, 1f)] private float reviveHpFraction = 0.5f;
+        [SerializeField] private float hpDrainPerHourWhenStarving = 0f;
+        [SerializeField] private float hpDrainPerHourWhenCold = 0f;
+        [SerializeField] private float hpRegenPerHourWhenHealthy = 0f;
+        [SerializeField] private float hpRegenMinHunger = 0f;
+        [SerializeField] private float hpRegenMinThirst = 0f;
+        [SerializeField] [Range(0f, 1f)] private float reviveHpFraction = 0f;
 
         [Header("스태미나 (달리기)")]
-        [SerializeField] private float staminaDrainPerSecondRun = 8f;
-        [SerializeField] private float staminaDrainPerSecondBeastRun = 12f;
-        [SerializeField] private float staminaRegenPerSecond = 10f;
-        [SerializeField] [Range(0f, 1f)] private float sicknessStaminaRegenMultiplier = 0.5f;
+        [SerializeField] private float staminaDrainPerSecondRun = 0f;
+        [SerializeField] private float staminaDrainPerSecondBeastRun = 0f;
+        [SerializeField] private float staminaRegenPerSecond = 0f;
+        [SerializeField] [Range(0f, 1f)] private float sicknessStaminaRegenMultiplier = 0f;
 
         [Header("손 모드")]
-        [SerializeField] private float beastHandHungerMultiplier = 1.5f;
+        [SerializeField] private float beastHandHungerMultiplier = 0f;
 
         [Header("체온 (실외 밤에 하락, 그 외에는 서서히 회복)")]
-        [SerializeField] private float nightOutdoorTemperatureDropPerHour = -8f;
-        [SerializeField] private float temperatureRecoveryPerHourOutdoorDay = 4f;
-        [SerializeField] private float temperatureRecoveryPerHourIndoor = 10f;
-        [SerializeField] [Range(0, 23)] private int nightStartHour = 20;
-        [SerializeField] [Range(0, 23)] private int nightEndHour = 6;
+        [SerializeField] private float nightOutdoorTemperatureDropPerHour = 0f;
+        [SerializeField] private float temperatureRecoveryPerHourOutdoorDay = 0f;
+        [SerializeField] private float temperatureRecoveryPerHourIndoor = 0f;
+        [SerializeField] [Range(0, 23)] private int nightStartHour = 0;
+        [SerializeField] [Range(0, 23)] private int nightEndHour = 0;
 
         [Header("낙하 피해·골절")]
-        [SerializeField] private float fallDamageThresholdTiles = 4f;
-        [SerializeField] private float fallDamagePerExcessTile = 5f;
-        [SerializeField] private float fractureFallThresholdTiles = 8f;
+        [SerializeField] private float fallDamageThresholdTiles = 0f;
+        [SerializeField] private float fallDamagePerExcessTile = 0f;
+        [SerializeField] private float fractureFallThresholdTiles = 0f;
 
         [Header("상한 음식·더러운 물")]
-        [SerializeField] [Range(0f, 1f)] private float dirtyWaterSicknessChance = 0.3f;
-        [SerializeField] private float dirtyWaterThirstRestore = 30f;
+        [SerializeField] [Range(0f, 1f)] private float dirtyWaterSicknessChance = 0f;
+        [SerializeField] private float dirtyWaterThirstRestore = 0f;
 
         public float HpDrainPerHourWhenStarving => hpDrainPerHourWhenStarving;
         public float HpDrainPerHourWhenCold => hpDrainPerHourWhenCold;
