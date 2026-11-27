@@ -277,6 +277,67 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2399202732379404216, guid: 67af42aa8827b2648bbd143efd8432ca, type: 3}
   m_PrefabInstance: {fileID: 9394502}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &34069861
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 34069862}
+  - component: {fileID: 34069864}
+  - component: {fileID: 34069863}
+  m_Layer: 0
+  m_Name: ZombieSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &34069862
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 34069861}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 583660996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &34069863
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 34069861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 519e10321b5833242adbfbbca67aecf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.AI.EnemySpawner
+  persistentId: {fileID: 34069864}
+  prefab: {fileID: 6317988753843545930, guid: c44060a3a8d2fee489e8b0e45797d784, type: 3}
+  spawnGroup: {fileID: 11400000, guid: 166b58d1a2fa96c4f8c3ef9d9de8745c, type: 2}
+--- !u!114 &34069864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 34069861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c8f47224b97d1c45ad1e4b6fee3468a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Core.PersistentId
+  persistentId: f09a762616004bf1b09016b065408e5a
 --- !u!1 &85043534
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,6 +777,8 @@ Transform:
   - {fileID: 1618083393}
   - {fileID: 9394503}
   - {fileID: 1171436793}
+  - {fileID: 34069862}
+  - {fileID: 1448885149}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &906691987
@@ -1288,6 +1351,67 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1 &1448885148
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1448885149}
+  - component: {fileID: 1448885151}
+  - component: {fileID: 1448885150}
+  m_Layer: 0
+  m_Name: DogPackSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1448885149
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448885148}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -14, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 583660996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1448885150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448885148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 519e10321b5833242adbfbbca67aecf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.AI.EnemySpawner
+  persistentId: {fileID: 1448885151}
+  prefab: {fileID: 520586874033171085, guid: 6734b469892a55547b18ff033bab9fbc, type: 3}
+  spawnGroup: {fileID: 11400000, guid: 4fe431f728543d5488cd6a10f000b430, type: 2}
+--- !u!114 &1448885151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448885148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c8f47224b97d1c45ad1e4b6fee3468a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Core.PersistentId
+  persistentId: 9d7ecca414a741809d4b8d8a0c030a06
 --- !u!1001 &1618083392
 PrefabInstance:
   m_ObjectHideFlags: 0

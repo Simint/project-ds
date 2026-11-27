@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Building;
+using Game.Combat;
 using Game.Crafting;
 using Game.Inventory;
 using Game.Maps;
@@ -63,19 +64,23 @@ namespace Game.Core
             var storageRegistry = new StorageRegistry();
             var hubStructureRegistry = new HubStructureRegistry();
             var heatZoneRegistry = new HeatZoneRegistry();
+            var noiseSystem = new NoiseSystem();
+            var deathBagRegistry = new DeathBagRegistry();
             GameServices.RegisterMapStateRegistry(mapStateRegistry);
             GameServices.RegisterSaveService(saveService);
             GameServices.RegisterStorageRegistry(storageRegistry);
             GameServices.RegisterHubStructureRegistry(hubStructureRegistry);
             GameServices.RegisterHeatZoneRegistry(heatZoneRegistry);
+            GameServices.RegisterNoiseSystem(noiseSystem);
+            GameServices.RegisterDeathBagRegistry(deathBagRegistry);
 
             WorldSaveData save = saveService.Load();
-            if (save != null) ApplySave(save, mapStateRegistry, hubStructureRegistry);
+            if (save != null) ApplySave(save, mapStateRegistry, hubStructureRegistry, deathBagRegistry);
 
             GameServices.NotifyReady();
         }
 
-        private void ApplySave(WorldSaveData save, MapStateRegistry mapStateRegistry, HubStructureRegistry hubStructureRegistry)
+        private void ApplySave(WorldSaveData save, MapStateRegistry mapStateRegistry, HubStructureRegistry hubStructureRegistry, DeathBagRegistry deathBagRegistry)
         {
             worldClock.SetTotalMinutes(save.clockTotalMinutes);
 
@@ -88,6 +93,7 @@ namespace Game.Core
             }
 
             hubStructureRegistry.SetCurrent(save.hubStructures);
+            deathBagRegistry.SetFromSave(save.deathBag);
 
             if (playerSurvival != null)
             {

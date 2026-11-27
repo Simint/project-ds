@@ -22,6 +22,8 @@ namespace Game.Items
         [SerializeField] private ConsumableData consumable = new ConsumableData();
         [SerializeField] private bool isTool;
         [SerializeField] private ToolData tool = new ToolData();
+        [SerializeField] private bool isWeapon;
+        [SerializeField] private WeaponData weapon = new WeaponData();
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -38,6 +40,10 @@ namespace Game.Items
         /// <summary>도끼·곡괭이처럼 내구도가 있고 채집물 조건에 쓰이는 도구인지.</summary>
         public bool IsTool => isTool;
         public ToolData Tool => tool;
+
+        /// <summary>사람 손으로 근접 공격에 쓸 수 있는 무기인지 (docs/design/GAME_DESIGN.md 6.1).</summary>
+        public bool IsWeapon => isWeapon;
+        public WeaponData Weapon => weapon;
 
         /// <summary>내구도나 연료가 있는 아이템은 겹쳐 쌓지 않는다 (ARCHITECTURE.md 4.4).</summary>
         public int EffectiveMaxStackSize => isTool ? 1 : maxStackSize;

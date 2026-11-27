@@ -5447,6 +5447,7 @@ MonoBehaviour:
   playerStatusEffects: {fileID: 928987478}
   startMap: {fileID: 11400000, guid: d6e08b5caacd9cc45aee423372407a8a, type: 2}
   startSpawnPointId: start
+  deathBagPickupPrefab: {fileID: 7197047570669273054, guid: e986c559a450be948b0a26ba0b5d0e66, type: 3}
 --- !u!4 &1496509711
 Transform:
   m_ObjectHideFlags: 0

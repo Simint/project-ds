@@ -14,6 +14,7 @@ namespace Game.Player
         [SerializeField] private MovementPreset walk = new MovementPreset();
         [SerializeField] private MovementPreset run = new MovementPreset();
         [SerializeField] private MovementPreset beastRun = new MovementPreset();
+        [SerializeField] private MovementPreset crouch = new MovementPreset();
 
         [Header("점프")]
         [SerializeField] private float airControl = 0f;
@@ -28,6 +29,10 @@ namespace Game.Player
         public MovementPreset Walk => walk;
         public MovementPreset Run => run;
         public MovementPreset BeastRun => beastRun;
+
+        /// <summary>S키 앉아 걷기(docs/design/GAME_DESIGN.md 6.5). 달리기 키를 눌러도 이 프리셋이
+        /// 우선한다 — 앉은 채로는 달릴 수 없다.</summary>
+        public MovementPreset Crouch => crouch;
 
         public float AirControl => airControl;
         public float JumpHeightTiles => jumpHeightTiles;

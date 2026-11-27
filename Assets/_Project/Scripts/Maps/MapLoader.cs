@@ -4,6 +4,7 @@ using System.Threading;
 using Game.Building;
 using Game.Core;
 using Game.Inventory;
+using Game.Items;
 using Game.Player;
 using Game.Save;
 using Game.Survival;
@@ -32,10 +33,12 @@ namespace Game.Maps
         [SerializeField] private PlayerStatusEffects playerStatusEffects;
         [SerializeField] private MapDefinition startMap;
         [SerializeField] private string startSpawnPointId = "";
+        [SerializeField] private DeathBagPickup deathBagPickupPrefab;
 
         private IWorldClock worldClock;
         private MapStateRegistry mapStateRegistry;
         private HubStructureRegistry hubStructureRegistry;
+        private DeathBagRegistry deathBagRegistry;
         private SaveService saveService;
         private Scene currentScene;
         private MapRoot currentRoot;
@@ -70,6 +73,7 @@ namespace Game.Maps
             worldClock = GameServices.WorldClock;
             mapStateRegistry = GameServices.MapStateRegistry;
             hubStructureRegistry = GameServices.HubStructureRegistry;
+            deathBagRegistry = GameServices.DeathBagRegistry;
             saveService = GameServices.SaveService;
             Application.quitting += HandleApplicationQuitting;
 
@@ -142,7 +146,7 @@ namespace Game.Maps
                     ConfigureCameraBounds();
                 }
 
-                // TODO(6단계): 이 맵에 사망 주머니가 있으면 생성 (DeathBagRecord, ARCHITECTURE.md 4.8)
+                SpawnDeathBagIfPresent();
                 AutoSave();
 
                 MapChanged?.Invoke(CurrentMap);
@@ -188,6 +192,23 @@ namespace Game.Maps
             mapStateRegistry.Restore(currentRoot.Definition.Id, objects, worldClock?.TotalMinutes ?? 0);
         }
 
+        /// <summary>이 맵에 사망 주머니가 남아 있으면(죽은 자리가 바로 이 맵이면) 만든다
+        /// (ARCHITECTURE.md 4.8). 주머니를 열면 DeathBagPickup이 레지스트리를 비우므로, 다음에
+        /// 같은 맵에 들어와도 다시 생기지 않는다.</summary>
+        private void SpawnDeathBagIfPresent()
+        {
+            if (deathBagRegistry == null || !deathBagRegistry.HasBag || CurrentMap == null) return;
+            if (deathBagRegistry.Current.mapId != CurrentMap.Id) return;
+            if (deathBagPickupPrefab == null)
+            {
+                GameLog.Warning("MapLoader", "deathBagPickupPrefab이 비어 있어 사망 주머니를 만들지 못했습니다.", this);
+                return;
+            }
+
+            Vector2 position = new Vector2(deathBagRegistry.Current.x, deathBagRegistry.Current.y);
+            Instantiate(deathBagPickupPrefab, position, Quaternion.identity);
+        }
+
         /// <summary>맵 이동 없이 저장해야 할 때(잠자기 등) 바깥에서 부른다.</summary>
         public void SaveNow() => AutoSave();
 
@@ -218,6 +239,8 @@ namespace Game.Maps
 
             if (hubStructureRegistry != null)
                 data.hubStructures = new List<StructureSaveData>(hubStructureRegistry.Current);
+
+            if (deathBagRegistry != null) data.deathBag = deathBagRegistry.Current;
 
             if (playerSurvival != null)
                 foreach ((string id, float value) in playerSurvival.EnumerateStats())

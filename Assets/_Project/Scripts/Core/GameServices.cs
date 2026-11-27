@@ -1,5 +1,6 @@
 using System;
 using Game.Building;
+using Game.Combat;
 using Game.Crafting;
 using Game.Inventory;
 using Game.Maps;
@@ -28,6 +29,8 @@ namespace Game.Core
         public static StorageRegistry StorageRegistry { get; private set; }
         public static HubStructureRegistry HubStructureRegistry { get; private set; }
         public static HeatZoneRegistry HeatZoneRegistry { get; private set; }
+        public static NoiseSystem NoiseSystem { get; private set; }
+        public static DeathBagRegistry DeathBagRegistry { get; private set; }
         public static BuildModeController BuildModeController { get; private set; }
         public static BuildGrid BuildGrid { get; private set; }
         public static StorageUI StorageUI { get; private set; }
@@ -54,6 +57,8 @@ namespace Game.Core
         public static void RegisterStorageRegistry(StorageRegistry registry) => StorageRegistry = registry;
         public static void RegisterHubStructureRegistry(HubStructureRegistry registry) => HubStructureRegistry = registry;
         public static void RegisterHeatZoneRegistry(HeatZoneRegistry registry) => HeatZoneRegistry = registry;
+        public static void RegisterNoiseSystem(NoiseSystem system) => NoiseSystem = system;
+        public static void RegisterDeathBagRegistry(DeathBagRegistry registry) => DeathBagRegistry = registry;
 
         /// <summary>은신처 씬에만 있는 컴포넌트라, 그 씬이 열려 있을 때만 OnEnable/OnDisable로 등록·해제한다
         /// (다른 서비스들과 달리 Boot에서 한 번만 등록하지 않는다).</summary>
@@ -89,6 +94,8 @@ namespace Game.Core
             StorageRegistry = null;
             HubStructureRegistry = null;
             HeatZoneRegistry = null;
+            NoiseSystem = null;
+            DeathBagRegistry = null;
             BuildModeController = null;
             BuildGrid = null;
             StorageUI = null;

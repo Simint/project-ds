@@ -275,7 +275,10 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 - `CreatureBrain`: 상태 머신 (Idle, Wander, Investigate(소음), Chase, Attack, Flee, Return(영역))
   - 좀비는 소음에 강하게 반응한다. 동물은 영역(`TerritoryArea`)을 기준으로 행동한다.
 - `EnemySpawner`(PersistentId): 생성할 정의, 최대 수, 밤 추가 수, 리스폰 시간. 생성은 `ObjectPool<T>`로 한다.
+  - 스폰 규모(최대 수·흩어지는 반경)는 `SpawnGroupDefinition`(ScriptableObject, `Data/` 비공개 에셋)에 둔다. 지역별 적 수는 밸런스 수치라 공개 씬의 인스펙터에 직접 쓰지 않는다.
+  - **[MVP 6단계 현황]** 적 수가 적어 `ObjectPool` 대신 `Instantiate`/`Destroy`를 쓴다(떨어진 아이템 `Pickup`과 같은 기준). 밤 추가 수는 8단계(낮밤)에서 넣는다.
 - 화면 밖의 적은 `CreatureBrain` 갱신 빈도를 줄인다.
+  - **[보류]** MVP 6단계에서는 구현하지 않았다. 지금은 모든 `CreatureBrain`이 화면 안팎 구분 없이 매 `FixedUpdate`에 판단한다(시야 Linecast 포함). 적 수가 늘어 성능 문제가 보이면 그때 넣는다.
 - 은신처(Hub)에는 스포너를 두지 않는다. 습격도 없다.
 
 ### 4.8 사망·난이도

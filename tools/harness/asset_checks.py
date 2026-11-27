@@ -17,6 +17,8 @@ FILTER_MODE_CODES = {"Point": 0, "Bilinear": 1, "Trilinear": 2}
 CLASS_GAMEOBJECT = "1"
 CLASS_SPRITE_RENDERER = "212"
 CLASS_TILEMAP_RENDERER = "483"
+CLASS_CANVAS = "223"
+CANVAS_RENDER_MODE_WORLD_SPACE = 2
 CLASS_MONOBEHAVIOUR = "114"
 SORT_MODE_CUSTOM_AXIS = 3
 
@@ -177,9 +179,17 @@ def check_yaml_renderers(path: Path, cfg: Config, sorting: Optional[Dict[int, st
             if nm:
                 go_names[fid] = nm.group(1).strip()
     for cid, fid, stripped, body, start in docs:
-        if stripped or cid not in (CLASS_SPRITE_RENDERER, CLASS_TILEMAP_RENDERER):
+        if stripped or cid not in (CLASS_SPRITE_RENDERER, CLASS_TILEMAP_RENDERER, CLASS_CANVAS):
             continue
-        kind = "SpriteRenderer" if cid == CLASS_SPRITE_RENDERER else "TilemapRenderer"
+        if cid == CLASS_CANVAS:
+            # 화면 스페이스 캔버스는 Sorting Layer와 무관하다. 월드 스페이스(머리 위 체력바 등)만
+            # RENDERING_RULES.md 2장의 UI 레이어 규칙을 따른다.
+            mode = re.search(r"m_RenderMode:\s*(-?\d+)", body)
+            if not mode or int(mode.group(1)) != CANVAS_RENDER_MODE_WORLD_SPACE:
+                continue
+            kind = "월드 스페이스 Canvas"
+        else:
+            kind = "SpriteRenderer" if cid == CLASS_SPRITE_RENDERER else "TilemapRenderer"
         go = re.search(r"m_GameObject:\s*\{fileID:\s*(-?\d+)", body)
         name = go_names.get(go.group(1), "?") if go else "?"
         lid = re.search(r"m_SortingLayerID:\s*(-?\d+)", body)

@@ -78,7 +78,9 @@ namespace Game.Survival
             SurvivalStat stamina = Stats.Get(StatIds.Stamina);
             if (stamina == null) return;
 
-            bool wantsRun = inputReader != null && inputReader.RunHeld;
+            // 앉아 걷는 동안은 Run 키를 눌러도 실제로는 Crouch 프리셋으로 걷는다(PlayerController.ResolvePreset) —
+            // 스태미나도 그에 맞춰 소모하지 않는다.
+            bool wantsRun = inputReader != null && inputReader.RunHeld && !inputReader.CrouchHeld;
             // 가만히 서서 달리기 키만 누르고 있으면 소모하지 않는다 — 실제로 움직이고 있을 때만 깎는다.
             bool isMoving = inputReader != null && inputReader.MoveInput.sqrMagnitude > 0.0001f;
             bool beast = hands != null && hands.Mode == HandMode.Beast;

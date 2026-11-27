@@ -23,6 +23,7 @@ namespace Game.Player
         private readonly IPlayerMotionState groundedState = new GroundedMotionState();
         private readonly IPlayerMotionState jumpingState = new JumpingMotionState();
         private readonly IPlayerMotionState fallingState = new FallingMotionState();
+        private readonly IPlayerMotionState knockbackState = new KnockbackMotionState();
 
         // 출처(골절, 무게 등)별 이동·점프 배율. 모두 곱해서 쓴다 (add-survival-stat/상태 이상 연결용 자리,
         // ARCHITECTURE.md 4.2). Update가 아니라 상태 이상이 걸리거나 풀릴 때만 바뀌므로 매 프레임
@@ -35,6 +36,8 @@ namespace Game.Player
         private float coyoteTimer;
         private float jumpBufferTimer;
         private bool jumpCutRequested;
+        private Vector2 pendingKnockbackVelocity;
+        private float pendingStunSeconds;
 
         public Rigidbody2D Body => body;
         public PlayerMovementSettings Settings => settings;
@@ -43,6 +46,24 @@ namespace Game.Player
 
         internal IPlayerMotionState GroundedState => groundedState;
         internal IPlayerMotionState FallingState => fallingState;
+
+        /// <summary>적에게 맞아 밀려날 때 (docs/design/GAME_DESIGN.md 6.5 넉백). 입력을 무시하는
+        /// KnockbackMotionState로 잠깐 넘어간다 — Grounded가 매 FixedUpdate 수평 속도를 입력대로
+        /// 덮어쓰기 때문에, 그냥 velocity만 바꿔서는 다음 틱에 바로 지워진다.</summary>
+        public void ApplyKnockback(Vector2 velocity, float stunSeconds)
+        {
+            pendingKnockbackVelocity = velocity;
+            pendingStunSeconds = stunSeconds;
+            // 맞기 직전에 누른 점프(버퍼)나 땅에서 남은 코요테 타임으로 넉백이 바로 점프로 취소되지
+            // 않게 비운다. 넉백 중에 새로 누른 점프는 아래 FixedUpdate 조건이 막는다.
+            jumpBufferTimer = 0f;
+            coyoteTimer = 0f;
+            jumpCutRequested = false;
+            ChangeState(knockbackState);
+        }
+
+        internal Vector2 ConsumePendingKnockbackVelocity() => pendingKnockbackVelocity;
+        internal float ConsumePendingStunSeconds() => pendingStunSeconds;
 
         public float SpeedMultiplier => Multiply(speedMultipliers);
         public float JumpMultiplier => Multiply(jumpMultipliers);
@@ -91,7 +112,7 @@ namespace Game.Player
             coyoteTimer = actuallyGrounded ? settings.CoyoteTimeSeconds : coyoteTimer - Time.fixedDeltaTime;
             jumpBufferTimer -= Time.fixedDeltaTime;
 
-            if (jumpBufferTimer > 0f && coyoteTimer > 0f && currentState != jumpingState)
+            if (jumpBufferTimer > 0f && coyoteTimer > 0f && currentState != jumpingState && currentState != knockbackState)
             {
                 jumpBufferTimer = 0f;
                 coyoteTimer = 0f;
@@ -113,6 +134,7 @@ namespace Game.Player
 
         public MovementPreset ResolvePreset()
         {
+            if (inputReader != null && inputReader.CrouchHeld) return settings.Crouch; // 앉은 채로는 달릴 수 없다 (6.5)
             if (inputReader == null || !inputReader.RunHeld) return settings.Walk;
             if (survival != null && !survival.HasStamina) return settings.Walk; // 스태미나가 바닥이면 달릴 수 없다
             return hands != null && hands.Mode == HandMode.Beast ? settings.BeastRun : settings.Run;

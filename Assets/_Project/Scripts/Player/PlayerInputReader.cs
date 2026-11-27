@@ -18,9 +18,11 @@ namespace Game.Player
 
         private InputAction moveAction;
         private InputAction runAction;
+        private InputAction crouchAction;
         private InputAction jumpAction;
         private InputAction switchHandAction;
         private InputAction interactAction;
+        private InputAction attackAction;
         private InputAction uiNavigateAction;
         private InputAction uiSubmitAction;
         private InputAction uiCancelAction;
@@ -49,6 +51,10 @@ namespace Game.Player
 
         public Vector2 MoveInput { get; private set; }
         public bool RunHeld { get; private set; }
+
+        /// <summary>S키/패드로 앉아 걷는 동안 (docs/design/GAME_DESIGN.md 6.5). 소음을 내지 않고 적 시야
+        /// 거리도 줄어든다.</summary>
+        public bool CrouchHeld { get; private set; }
         public bool InteractHeld { get; private set; }
         public float UINavigateInput { get; private set; }
 
@@ -73,6 +79,9 @@ namespace Game.Player
         public event Action SwitchHandPressed;
         public event Action InteractPressed;
         public event Action InteractReleased;
+
+        /// <summary>바라보는 방향으로 근접 공격 (마우스 왼쪽 클릭/패드 공격 버튼, docs/design/GAME_DESIGN.md 6.5).</summary>
+        public event Action AttackPressed;
         public event Action UISubmitPressed;
         public event Action UICancelPressed;
         public event Action ToggleInventoryPressed;
@@ -105,9 +114,11 @@ namespace Game.Player
             InputActionMap map = actions.FindActionMap("Player", throwIfNotFound: true);
             moveAction = map.FindAction("Move", throwIfNotFound: true);
             runAction = map.FindAction("Run", throwIfNotFound: true);
+            crouchAction = map.FindAction("Crouch", throwIfNotFound: true);
             jumpAction = map.FindAction("Jump", throwIfNotFound: true);
             switchHandAction = map.FindAction("SwitchHand", throwIfNotFound: true);
             interactAction = map.FindAction("Interact", throwIfNotFound: true);
+            attackAction = map.FindAction("Attack", throwIfNotFound: true);
             uiNavigateAction = map.FindAction("UINavigate", throwIfNotFound: true);
             uiSubmitAction = map.FindAction("UISubmit", throwIfNotFound: true);
             uiCancelAction = map.FindAction("UICancel", throwIfNotFound: true);
@@ -139,9 +150,11 @@ namespace Game.Player
             if (moveAction == null) return;
             moveAction.Enable();
             runAction.Enable();
+            crouchAction.Enable();
             jumpAction.Enable();
             switchHandAction.Enable();
             interactAction.Enable();
+            attackAction.Enable();
             uiNavigateAction.Enable();
             uiSubmitAction.Enable();
             uiCancelAction.Enable();
@@ -161,6 +174,7 @@ namespace Game.Player
             switchHandAction.performed += HandleSwitchHandPerformed;
             interactAction.performed += HandleInteractPerformed;
             interactAction.canceled += HandleInteractCanceled;
+            attackAction.performed += HandleAttackPerformed;
             uiSubmitAction.performed += HandleUISubmitPerformed;
             uiCancelAction.performed += HandleUICancelPerformed;
             toggleInventoryAction.performed += HandleToggleInventoryPerformed;
@@ -186,6 +200,7 @@ namespace Game.Player
             switchHandAction.performed -= HandleSwitchHandPerformed;
             interactAction.performed -= HandleInteractPerformed;
             interactAction.canceled -= HandleInteractCanceled;
+            attackAction.performed -= HandleAttackPerformed;
             uiSubmitAction.performed -= HandleUISubmitPerformed;
             uiCancelAction.performed -= HandleUICancelPerformed;
             toggleInventoryAction.performed -= HandleToggleInventoryPerformed;
@@ -204,9 +219,11 @@ namespace Game.Player
 
             moveAction.Disable();
             runAction.Disable();
+            crouchAction.Disable();
             jumpAction.Disable();
             switchHandAction.Disable();
             interactAction.Disable();
+            attackAction.Disable();
             uiNavigateAction.Disable();
             uiSubmitAction.Disable();
             uiCancelAction.Disable();
@@ -228,6 +245,7 @@ namespace Game.Player
             bool isLocked = IsLocked;
             MoveInput = isLocked ? Vector2.zero : moveAction.ReadValue<Vector2>();
             RunHeld = !isLocked && runAction.IsPressed();
+            CrouchHeld = !isLocked && crouchAction.IsPressed();
             InteractHeld = !isLocked && interactAction.IsPressed();
             UINavigateInput = uiNavigateAction.ReadValue<float>();
             HotbarScrollInput = isLocked ? 0f : hotbarScrollAction.ReadValue<float>();
@@ -302,6 +320,11 @@ namespace Game.Player
         private void HandleInteractCanceled(InputAction.CallbackContext context)
         {
             if (!IsLocked) InteractReleased?.Invoke();
+        }
+
+        private void HandleAttackPerformed(InputAction.CallbackContext context)
+        {
+            if (!IsLocked) AttackPressed?.Invoke();
         }
 
         /// <summary>가방 자신이 잠금을 걸기 때문에(Tab으로 열면 그 뒤로 잠겨서) ToggleBuildMode/UICancel과
