@@ -5,7 +5,8 @@ namespace Game.Player
     /// <summary>
     /// 플레이어가 보는 좌우 방향 (docs/design/GAME_DESIGN.md 6.5 "바라보는 방향 앞쪽"). 이동 입력이
     /// 있으면 그 방향을 보고, 멈추면 마지막 방향을 유지한다. 방향은 bodyRenderer.flipX로 보여준다.
-    /// artFacesLeft는 그림이 그려진 기준 방향이다(플레이어 시트는 왼쪽을 보고 그렸다).
+    /// artFacesLeft는 그림이 그려진 기준 방향이다(플레이어 시트는 왼쪽을 보고 그렸다). 반대 방향으로 그려진
+    /// 동작이 있으면 코드가 아니라 그 애니메이션 클립에서 그림 오브젝트의 가로 스케일을 -1로 둔다(예: 대기).
     /// </summary>
     public sealed class PlayerFacing : MonoBehaviour
     {
