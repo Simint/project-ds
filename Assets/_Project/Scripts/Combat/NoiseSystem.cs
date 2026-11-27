@@ -19,10 +19,23 @@ namespace Game.Combat
 
         public void Unregister(INoiseListener listener) => listeners.Remove(listener);
 
+        private readonly System.Func<float> radiusMultiplier;
+
+        /// <param name="radiusMultiplier">적이 듣는 반경에 곱할 배율을 돌려준다(폭우의 빗소리가 소음을 묻음,
+        /// docs/design/GAME_DESIGN.md 5.6). 비우면 1.</param>
+        public NoiseSystem(System.Func<float> radiusMultiplier = null)
+        {
+            this.radiusMultiplier = radiusMultiplier;
+        }
+
+        /// <summary>지금 적용되는 배율(날씨가 없으면 1).</summary>
+        public float RadiusMultiplier => radiusMultiplier != null ? radiusMultiplier() : 1f;
+
         public void Emit(Vector2 position, float radius, NoiseKind kind)
         {
+            float heardRadius = radius * RadiusMultiplier;
             for (int i = 0; i < listeners.Count; i++)
-                listeners[i].OnNoiseHeard(position, radius, kind);
+                listeners[i].OnNoiseHeard(position, heardRadius, kind);
         }
     }
 }

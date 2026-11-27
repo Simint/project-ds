@@ -3,6 +3,7 @@ using Game.Inventory;
 using Game.Items;
 using Game.Maps;
 using Game.Player;
+using Game.World;
 using UnityEngine;
 
 namespace Game.Harvesting
@@ -54,7 +55,10 @@ namespace Game.Harvesting
             if (inventory != null && lootTable != null)
             {
                 foreach (ItemAmount amount in lootTable.Items)
-                    if (amount.Count > 0) inventory.Collect(amount.ItemId, amount.Count);
+                    {
+                        int count = DifficultyRules.LootCount(amount.Count, GameServices.Difficulty);
+                        if (count > 0) inventory.Collect(amount.ItemId, count);
+                    }
             }
             else if (inventory == null && lootTable != null)
             {

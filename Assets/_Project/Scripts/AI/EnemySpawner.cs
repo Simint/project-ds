@@ -33,6 +33,52 @@ namespace Game.AI
             if (spawnGroup == null) Debug.LogError("[EnemySpawner] spawnGroup 참조가 비어 있습니다.", this);
         }
 
+        private IDayNight dayNight;
+        private bool nightExtrasSpawned;
+
+        private void OnEnable()
+        {
+            GameServices.Ready += HandleReady;
+            if (GameServices.IsReady) HandleReady();
+        }
+
+        private void OnDisable()
+        {
+            GameServices.Ready -= HandleReady;
+            if (dayNight != null) dayNight.NightChanged -= HandleNightChanged;
+            dayNight = null;
+        }
+
+        private void HandleReady()
+        {
+            if (dayNight != null) return;
+            dayNight = GameServices.DayNight;
+            if (dayNight != null) dayNight.NightChanged += HandleNightChanged;
+        }
+
+        /// <summary>밤이 되면 '밤 추가 수'만큼만 더 내보낸다(5.6 8단계). 낮에 잡은 적은 리스폰 시간이 지나야 돌아온다.
+        /// 낮이 돼도 이미 나온 적은 그대로 두고, 다음 밤에 다시 추가분을 낸다.</summary>
+        private void HandleNightChanged(bool isNight)
+        {
+            if (!isNight)
+            {
+                nightExtrasSpawned = false;
+                return;
+            }
+            if (depleted || nightExtrasSpawned || spawnGroup == null) return;
+            nightExtrasSpawned = true;
+            SpawnUpTo(alive.Count + spawnGroup.NightExtraCount);
+        }
+
+        /// <summary>맵에 들어올 때 내보낼 수. 밤이면 처음부터 추가분까지 낸다.</summary>
+        private int InitialCount()
+        {
+            if (spawnGroup == null) return 0;
+            bool night = dayNight != null && dayNight.IsNight;
+            if (night) nightExtrasSpawned = true;
+            return spawnGroup.MaxAliveCount + (night ? spawnGroup.NightExtraCount : 0);
+        }
+
         private void OnDestroy()
         {
             // 맵 언로드로 스포너와 적이 함께 사라질 때 남은 구독을 정리한다.
@@ -48,14 +94,14 @@ namespace Game.AI
         private void Start()
         {
             // Restore()가 Awake 직후(씬 로드 시) 이미 depleted를 맞춰 놓은 상태다 — 비어 있지 않을 때만 쓴다.
-            if (!depleted) SpawnAll();
+            if (!depleted) SpawnUpTo(InitialCount());
         }
 
-        private void SpawnAll()
+        private void SpawnUpTo(int targetCount)
         {
             if (prefab == null || spawnGroup == null) return;
             float radius = spawnGroup.SpawnRadiusTiles;
-            for (int i = 0; i < spawnGroup.MaxAliveCount; i++)
+            while (alive.Count < targetCount)
             {
                 Vector2 offset = radius > 0f ? Random.insideUnitCircle * radius : Vector2.zero;
                 CreatureBrain instance = Instantiate(prefab, (Vector2)transform.position + offset, Quaternion.identity);
@@ -77,7 +123,8 @@ namespace Game.AI
             depleted = true;
             long nowMinute = GameServices.WorldClock != null ? GameServices.WorldClock.TotalMinutes : 0;
             int respawnDays = prefab != null && prefab.Definition != null ? prefab.Definition.RespawnDays : 0;
-            respawnAtMinute = respawnDays > 0 ? nowMinute + respawnDays * WorldClock.MinutesPerDay : 0;
+            long respawnMinutes = DifficultyRules.RespawnMinutes(respawnDays, GameServices.Difficulty);
+            respawnAtMinute = respawnMinutes > 0 ? nowMinute + respawnMinutes : 0;
         }
 
         public ObjectStateRecord Capture() => new ObjectStateRecord(depleted ? 1 : 0, respawnAtMinute, null);

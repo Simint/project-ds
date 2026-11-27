@@ -15,10 +15,10 @@ namespace Game.Save
         /// <summary>저장 형식이 바뀔 때마다 올린다 (ARCHITECTURE.md 4.10 "버전과 옛 저장 파일"). 2 =
         /// MVP 4·5단계에서 늘어난 stats·statusEffects·durability·hubStructures. 3 = InventorySlotData.
         /// slotIndex 추가(가방·보관함을 정확히 같은 칸에 복원). 4 = deathBag(MVP 6단계, mapId가 비어
-        /// 있으면 "주머니 없음"). 5 = loreNoteIds(MVP 7단계 쪽지 기록, 없으면 빈 목록). 옛 버전 파일을 불러올 때 새로 생긴 필드는 JsonUtility가 C# 기본값
+        /// 있으면 "주머니 없음"). 5 = loreNoteIds(MVP 7단계 쪽지 기록, 없으면 빈 목록). 6 = weatherId·weatherEndsAtMinute·rainMinutesTotal(MVP 8단계, 없으면 새로 뽑음). 옛 버전 파일을 불러올 때 새로 생긴 필드는 JsonUtility가 C# 기본값
         /// (필드 초기값, 예: slotIndex -1, deathBag.mapId "")으로 채운다(기본값으로 충분하지 않은
         /// 변경이면 그때 Save/Migrations/에 실제 변환 코드를 추가한다).</summary>
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int version = CurrentVersion;
         public WorldSettings settings;
@@ -33,6 +33,9 @@ namespace Game.Save
         public List<StructureSaveData> hubStructures = new List<StructureSaveData>();
         public DeathBagRecord deathBag = new DeathBagRecord();
         public List<string> loreNoteIds = new List<string>();
+        public string weatherId = "";
+        public long weatherEndsAtMinute;
+        public long rainMinutesTotal;
     }
 
     [Serializable]

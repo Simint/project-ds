@@ -18,7 +18,7 @@ namespace Game.Maps
 {
     /// <summary>
     /// 맵 씬 전환의 유일한 창구. GameServices에 등록되어 문·맵 선택에서 호출한다 (ARCHITECTURE.md 3.3).
-    /// Boot 씬에 하나 두고, Awake에서 자기 참조만 캐시한 뒤 Start에서 시작 맵으로 이동한다. 맵 이동이
+    /// Boot 씬에 하나 두고, Awake에서 자기 참조만 캐시한다. 타이틀에서 시작을 고르면 BeginGame()으로 시작 맵에 간다. 맵 이동이
     /// 끝날 때마다 자동 저장한다 (docs/design/GAME_DESIGN.md 9).
     /// </summary>
     public sealed class MapLoader : MonoBehaviour
@@ -76,7 +76,13 @@ namespace Game.Maps
             deathBagRegistry = GameServices.DeathBagRegistry;
             saveService = GameServices.SaveService;
             Application.quitting += HandleApplicationQuitting;
+        }
 
+        /// <summary>타이틀에서 새 게임·이어하기를 고른 뒤 GameBootstrap이 부른다. 그전에는 맵을 불러오지 않는다
+        /// (불러오기면 SetStartOverride가 먼저 불려 있다).</summary>
+        public void BeginGame()
+        {
+            if (playerBody != null) playerBody.simulated = true;
             MapDefinition target = startOverrideMap != null ? startOverrideMap : startMap;
             string spawnId = startOverrideMap != null ? "" : startSpawnPointId;
             _ = Travel(target, spawnId, 0, startOverridePosition);
@@ -88,7 +94,7 @@ namespace Game.Maps
         /// 강제로 캡처하므로 여기서 더 할 일은 없다).</summary>
         private void HandleApplicationQuitting() => AutoSave();
 
-        /// <summary>저장 파일을 불러왔을 때 GameBootstrap이 시작 맵·위치를 덮어쓴다 (Start보다 먼저 불린다).</summary>
+        /// <summary>저장 파일을 불러왔을 때 GameBootstrap이 시작 맵·위치를 덮어쓴다 (BeginGame보다 먼저 불린다).</summary>
         public void SetStartOverride(MapDefinition map, Vector2 position)
         {
             startOverrideMap = map;
@@ -244,6 +250,13 @@ namespace Game.Maps
 
             if (GameServices.LoreCollection != null)
                 data.loreNoteIds = new List<string>(GameServices.LoreCollection.Ids);
+
+            if (GameServices.Weather != null && GameServices.Weather.Current != null)
+            {
+                data.weatherId = GameServices.Weather.Current.Id;
+                data.weatherEndsAtMinute = GameServices.Weather.EndsAtMinute;
+                data.rainMinutesTotal = GameServices.Weather.RainMinutesTotal;
+            }
 
             if (playerSurvival != null)
                 foreach ((string id, float value) in playerSurvival.EnumerateStats())

@@ -17,8 +17,15 @@ namespace Game.Items
         [SerializeField] private string interactPrompt = "마시기 (더러운 물)";
         [SerializeField] private bool isDirty = true;
         [SerializeField] private SurvivalSettings settings;
+        [Tooltip("바깥 물웅덩이는 겨울에 언다 (docs/design/GAME_DESIGN.md 5.6).")]
+        [SerializeField] private bool freezesInWinter = true;
+        [SerializeField] private string frozenPrompt = "얼어 있어 마실 수 없다";
 
-        public string InteractPrompt => interactPrompt;
+        public string InteractPrompt => IsFrozen ? frozenPrompt : interactPrompt;
+
+        /// <summary>실외 맵의 물웅덩이만 언다. 실내 물은 freezesInWinter를 끈다.</summary>
+        private bool IsFrozen => freezesInWinter && GameServices.Seasons != null && GameServices.Seasons.IsWinter
+                                 && !(GameServices.MapLoader != null && GameServices.MapLoader.CurrentMap != null && GameServices.MapLoader.CurrentMap.IsIndoor);
         public HandRequirement RequiredHand => HandRequirement.Any;
         public float HoldSecondsRequired => 0f;
 
@@ -29,7 +36,7 @@ namespace Game.Items
 
         public void Interact(GameObject interactor)
         {
-            if (settings == null || interactor == null) return;
+            if (settings == null || interactor == null || IsFrozen) return;
 
             PlayerHeldItem heldItem = interactor.GetComponentInParent<PlayerHeldItem>();
             if (heldItem != null && heldItem.SelectedDefinition != null && heldItem.SelectedDefinition.Id == WaterItemIds.EmptyBottle)

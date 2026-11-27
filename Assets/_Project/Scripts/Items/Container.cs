@@ -1,6 +1,7 @@
 using Game.Core;
 using Game.Inventory;
 using Game.Player;
+using Game.World;
 using UnityEngine;
 
 namespace Game.Items
@@ -45,7 +46,10 @@ namespace Game.Items
             if (lootTable != null)
             {
                 foreach (ItemAmount amount in lootTable.Items)
-                    if (amount.Count > 0) inventory.Collect(amount.ItemId, amount.Count);
+                    {
+                        int count = DifficultyRules.LootCount(amount.Count, GameServices.Difficulty);
+                        if (count > 0) inventory.Collect(amount.ItemId, count);
+                    }
             }
 
             SetLooted(true);

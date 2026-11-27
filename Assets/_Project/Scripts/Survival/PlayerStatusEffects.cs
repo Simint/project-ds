@@ -54,8 +54,14 @@ namespace Game.Survival
 
         public void Cure(string id) => Effects.Cure(id);
 
-        public void RestoreEffects(System.Collections.Generic.IEnumerable<(string id, long untilMinute)> entries) =>
+        /// <summary>불러오기. SetFromSave는 이벤트를 쏘지 않으므로, 이어하기처럼 OnEnable 뒤에 불려도 효과(이동·스탯
+        /// 모디파이어)가 빠지지 않게 여기서 다시 건다.</summary>
+        public void RestoreEffects(System.Collections.Generic.IEnumerable<(string id, long untilMinute)> entries)
+        {
             Effects.SetFromSave(entries);
+            if (isActiveAndEnabled)
+                foreach (string id in Effects.ActiveIds) HandleApplied(id);
+        }
 
         public System.Collections.Generic.IEnumerable<(string id, long untilMinute)> EnumerateEffects() =>
             Effects.EnumerateForSave();

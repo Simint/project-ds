@@ -2,6 +2,9 @@ using Game.Core;
 using Game.Inventory;
 using Game.Maps;
 using Game.Save;
+using Game.Items;
+using Game.World;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Game.Survival
@@ -59,8 +62,9 @@ namespace Game.Survival
             if (hubMap != null) _ = loader.Travel(hubMap, hubSpawnPointId, 0);
         }
 
-        /// <summary>죽은 자리(현재 맵·위치)와 가방 전체를 사망 주머니로 남기고 가방을 비운다. 새로
-        /// 죽으면 이전 주머니는 덮어써 사라진다(DeathBagRegistry.Set, 5.8 "마지막 하나만").</summary>
+        /// <summary>죽은 자리(현재 맵·위치)와 난이도가 정한 범위의 물건을 사망 주머니로 남기고 가방에서 뺀다
+        /// (5.8: 쉬움은 재료류만, 보통·어려움은 가방 전부). 새로 죽으면 이전 주머니는 덮어써 사라진다
+        /// (DeathBagRegistry.Set, 5.8 "마지막 하나만").</summary>
         private void DropDeathBag()
         {
             MapLoader loader = GameServices.MapLoader;
@@ -73,7 +77,13 @@ namespace Game.Survival
                 x = transform.position.x,
                 y = transform.position.y
             };
+            DeathDropScope scope = DifficultyRules.DropScope(GameServices.Difficulty);
+            var dropped = new List<int>();
             foreach ((string itemId, int count, long spoilAtMinute, int durability, int slotIndex) in playerInventory.EnumerateSlots())
+            {
+                ItemDefinition def = playerInventory.FindDefinition(itemId);
+                if (def != null && !DeathDropRules.ShouldDrop(def.Category, scope)) continue;
+                dropped.Add(slotIndex);
                 record.items.Add(new InventorySlotData
                 {
                     itemId = itemId,
@@ -82,9 +92,11 @@ namespace Game.Survival
                     durability = durability,
                     slotIndex = slotIndex
                 });
+            }
 
             registry.Set(record);
-            playerInventory.Model.Clear();
+            foreach (int slotIndex in dropped)
+                playerInventory.Model.RemoveFromSlot(slotIndex, int.MaxValue);
         }
     }
 }

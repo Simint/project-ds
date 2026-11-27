@@ -21,6 +21,10 @@ namespace Game.Core
     public static class GameServices
     {
         public static IWorldClock WorldClock { get; private set; }
+        public static SeasonSystem Seasons { get; private set; }
+        public static WeatherSystem Weather { get; private set; }
+        public static IDayNight DayNight { get; private set; }
+        public static DifficultyDefinition Difficulty { get; private set; }
         public static MapLoader MapLoader { get; private set; }
         public static TravelMenuUI TravelMenu { get; private set; }
         public static PlayerInventory PlayerInventory { get; private set; }
@@ -45,7 +49,23 @@ namespace Game.Core
         /// <summary>모든 서비스 등록이 끝난 뒤 한 번 발행된다. 등록 순서와 무관하게 구독할 수 있다.</summary>
         public static event Action Ready;
 
+        /// <summary>타이틀에서 새 게임·이어하기로 실제 플레이가 시작될 때(난이도·날씨가 정해진 뒤).</summary>
+        public static event Action GameStarted;
+
+        public static bool IsGameStarted { get; private set; }
+
         public static void RegisterWorldClock(IWorldClock clock) => WorldClock = clock;
+        public static void RegisterSeasons(SeasonSystem seasons) => Seasons = seasons;
+        public static void RegisterWeather(WeatherSystem weather) => Weather = weather;
+        public static void RegisterDayNight(IDayNight dayNight) => DayNight = dayNight;
+        /// <summary>새 게임·불러오기 때 월드 설정의 난이도 id로 정한다.</summary>
+        public static void SetDifficulty(DifficultyDefinition difficulty) => Difficulty = difficulty;
+
+        /// <summary>지금 맵이 실내인지(날씨 효과 없음, 5.6).</summary>
+        public static bool IsIndoor => MapLoader != null && MapLoader.CurrentMap != null && MapLoader.CurrentMap.IsIndoor;
+
+        /// <summary>지금 날씨가 적 감지 범위에 곱하는 배율(실내면 1).</summary>
+        public static float WeatherEnemySightMultiplier => WeatherRules.EnemySightMultiplier(Weather?.Current, IsIndoor);
         public static void RegisterMapLoader(MapLoader loader) => MapLoader = loader;
         public static void RegisterTravelMenu(TravelMenuUI menu) => TravelMenu = menu;
 
@@ -78,6 +98,12 @@ namespace Game.Core
         public static void RegisterCraftingUI(CraftingUI ui) => CraftingUI = ui;
         public static void RegisterSleepUI(SleepUI ui) => SleepUI = ui;
 
+        public static void NotifyGameStarted()
+        {
+            IsGameStarted = true;
+            GameStarted?.Invoke();
+        }
+
         public static void NotifyReady()
         {
             IsReady = true;
@@ -92,6 +118,12 @@ namespace Game.Core
         private static void ResetOnLoad()
         {
             WorldClock = null;
+            Seasons = null;
+            IsGameStarted = false;
+            GameStarted = null;
+            Weather = null;
+            DayNight = null;
+            Difficulty = null;
             MapLoader = null;
             TravelMenu = null;
             PlayerInventory = null;

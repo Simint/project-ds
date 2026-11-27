@@ -18,6 +18,7 @@ namespace Game.Survival
     {
         private const string HandModeSource = "hand_mode";
         private const string EnvironmentSource = "environment";
+        private const string DifficultySource = "difficulty";
 
         // ReviveHpFraction이 0이면(설정 누락 등) HP 0으로 부활해 다음 틱에 바로 재사망 판정이 나는
         // 루프가 생긴다 — 그걸 막는 기술적 하한이라 밸런스 수치가 아니다.
@@ -56,13 +57,16 @@ namespace Game.Survival
         {
             if (hands != null) hands.HandModeChanged += HandleHandModeChanged;
             GameServices.Ready += HandleServicesReady;
+            GameServices.GameStarted += ApplyDifficulty;
             if (GameServices.IsReady) HandleServicesReady();
+            if (GameServices.IsGameStarted) ApplyDifficulty();
         }
 
         private void OnDisable()
         {
             if (hands != null) hands.HandModeChanged -= HandleHandModeChanged;
             GameServices.Ready -= HandleServicesReady;
+            GameServices.GameStarted -= ApplyDifficulty;
             if (worldClock != null)
             {
                 worldClock.MinutePassed -= HandleMinutePassed;
@@ -243,19 +247,33 @@ namespace Game.Survival
             }
         }
 
+        /// <summary>난이도의 생존 스탯 감소 배율을 허기·갈증에 건다 (docs/design/GAME_DESIGN.md 5.6의 8단계 범위).</summary>
+        private void ApplyDifficulty()
+        {
+            float multiplier = DifficultyRules.SurvivalDecay(GameServices.Difficulty);
+            Stats.SetModifier(DifficultySource, StatIds.Hunger, StatModifier.Multiply(multiplier));
+            Stats.SetModifier(DifficultySource, StatIds.Thirst, StatModifier.Multiply(multiplier));
+        }
+
         private void RefreshTemperatureModifier()
         {
             if (settings == null || worldClock == null) return;
-            bool safe = mapLoader?.CurrentMap != null &&
-                        (mapLoader.CurrentMap.IsIndoor || mapLoader.CurrentMap.Kind == MapKind.Hub);
+            bool indoor = mapLoader?.CurrentMap != null && mapLoader.CurrentMap.IsIndoor;
+            bool safe = mapLoader?.CurrentMap != null && (indoor || mapLoader.CurrentMap.Kind == MapKind.Hub);
             int hour = (int)(worldClock.TotalMinutes / 60 % 24);
             float heatBonus = GameServices.HeatZoneRegistry != null
                 ? GameServices.HeatZoneRegistry.GetExtraRecoveryAt(transform.position)
                 : 0f;
+            // 계절 기온은 실내에도, 날씨(비·눈·폭우)는 실외에서만 체온에 더해진다 (5.6).
+            float seasonRate = GameServices.Seasons != null ? GameServices.Seasons.TemperaturePerHour : 0f;
+            float weatherRate = WeatherRules.TemperaturePerHour(GameServices.Weather?.Current, indoor);
+            heatBonus += seasonRate + weatherRate;
+            bool night = GameServices.DayNight != null ? GameServices.DayNight.IsNight : settings.IsNightHour(hour);
 
-            // 실외 밤이 아니면(실내·은신처, 실외 낮) 서서히 회복한다 — 최대치에서 멈추는 건
-            // SurvivalStat.Add의 clamp가 처리한다. 켜진 화로 근처면 heatBonus만큼 더 빠르다.
-            Stats.SetModifier(EnvironmentSource, StatIds.Temperature, settings.ComputeTemperatureModifier(safe, hour, heatBonus));
+            // 밤 추위는 실외 지역에서만(실내·은신처는 안전), 계절 기온은 어디서나, 날씨는 실내 맵을 뺀 곳(은신처 포함)에서
+            // 더해진다 — 그래서 은신처에서도 비·눈이면 체온이 떨어질 수 있다. 최대치에서 멈추는 건 SurvivalStat.Add의 clamp가,
+            // 켜진 화로 근처의 추가 회복은 heatBonus가 맡는다.
+            Stats.SetModifier(EnvironmentSource, StatIds.Temperature, settings.ComputeTemperatureModifier(safe, night, heatBonus));
         }
     }
 }

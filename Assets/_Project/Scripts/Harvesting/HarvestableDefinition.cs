@@ -23,6 +23,8 @@ namespace Game.Harvesting
         [SerializeField] private float holdSeconds = 0f;
         [SerializeField] private HarvestDrop[] drops = System.Array.Empty<HarvestDrop>();
         [SerializeField] private int respawnDays = 0;
+        [Tooltip("덤불·열매·풀 같은 식물이면 겨울에 채집할 수 없다 (docs/design/GAME_DESIGN.md 5.6).")]
+        [SerializeField] private bool isPlant;
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -35,5 +37,6 @@ namespace Game.Harvesting
 
         /// <summary>0이면 리스폰하지 않는다.</summary>
         public int RespawnDays => respawnDays;
+        public bool IsPlant => isPlant;
     }
 }

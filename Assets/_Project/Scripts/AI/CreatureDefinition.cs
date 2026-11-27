@@ -31,6 +31,11 @@ namespace Game.AI
         [SerializeField] private float attackKnockbackForce = 0f;
         [SerializeField] [Range(0f, 1f)] private float attackBleedChance = 0f;
 
+        [Header("밤 보정 (5.6 8단계: 일반 좀비만 1보다 크게)")]
+        [SerializeField] [Min(0f)] private float nightSpeedMultiplier = 1f;
+        [SerializeField] [Min(0f)] private float nightDamageMultiplier = 1f;
+        [SerializeField] [Min(0f)] private float nightSightMultiplier = 1f;
+
         [Header("리스폰 (채집물과 같은 방식, 6.5)")]
         [SerializeField] private int respawnDays = 0;
 
@@ -45,6 +50,9 @@ namespace Game.AI
         public float AttackRangeTiles => attackRangeTiles;
         public float AttackKnockbackForce => attackKnockbackForce;
         public float AttackBleedChance => attackBleedChance;
+        public float NightSpeedMultiplier => nightSpeedMultiplier;
+        public float NightDamageMultiplier => nightDamageMultiplier;
+        public float NightSightMultiplier => nightSightMultiplier;
 
         /// <summary>0이면 리스폰하지 않는다.</summary>
         public int RespawnDays => respawnDays;

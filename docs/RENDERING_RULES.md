@@ -109,3 +109,4 @@ CinemachinePixelPerfect는 쓰지 않는다.
 - `Global Light 2D` 하나로 낮밤 색·밝기를 바꾼다 (`WorldClock`이 구동).
 - 횃불 등 `Light 2D`의 Target Sorting Layers: `BackWall`, `Props`, `Terrain`, `Entities`, `Foreground`. 하늘·먼 배경은 빼서 실내 빛이 하늘을 밝히지 않게 한다.
 - `Sky`, `FarBackground`는 별도의 Global Light 2D(그 레이어만 대상)로 하늘색을 따로 제어해도 된다.
+- 지금은 Boot에 `GlobalLight`(Sky를 뺀 모든 레이어, `DayNightCycle`이 밝기·색을 바꿈)와 `SkyLight`(Sky만, 밝기 1 고정)를 둔다. 하늘색 자체는 카메라 배경색으로 바꾼다.

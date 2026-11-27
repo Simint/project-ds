@@ -185,7 +185,15 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 - `WeatherSystem`: 계절별 가중치로 `WeatherDefinition`을 고르고 일정 시간마다 바꾼다.
   - `WeatherDefinition`: id, 온도 보정, 시야 보정, 소음 반경 배율, 낙진 피폭량/분, 비·눈 여부, FX 프리팹.
   - 현재 맵이 `isIndoor`이면 효과를 적용하지 않는다. 화면 FX도 끈다.
-- `DayNightCycle`: `WorldClock`을 `Gradient`로 바꿔 Global Light 2D에 반영한다 (실내 제외).
+- `DayNightCycle`: `WorldClock` 시각을 Global Light 2D 밝기·색에 반영한다 (실제 구현은 아래 8단계 현황).
+- **[MVP 8단계 현황]**
+  - 등록 순서는 시계 → `SeasonSystem` → `WeatherSystem` → `DayNightCycle`(`IDayNight`) → 맵·저장 → 나머지다(`GameBootstrap`).
+  - `SeasonSystem`은 `SeasonSettings`(계절별 시간당 체온 변화, 실내에도 적용)를 함께 들고 있다. 겨울에는 `HarvestableDefinition.isPlant` 채집물을 막고, 실외 `WaterSource`가 언다.
+  - `WeatherSystem`은 순수 C# 서비스다. `WeatherSettings`(계절별 가중치 목록, 맑음은 fallback)로 뽑고, 끝나는 시각이 되면 다음 날씨를 뽑는다. `Advance`로 건너뛴 시간은 한꺼번에 넘긴다. 지금 날씨 id와 끝나는 시각은 저장된다.
+  - 효과 계산은 순수 함수 `WeatherRules`(실내면 체온·시야·소음 효과 없음)가 맡는다. 표시는 Boot의 `WeatherPresenter`가 맡는다: 화면 덮개(짙기 = 덮개 색 알파와 '플레이어 시야 배율' 중 진한 쪽), 카메라를 따라다니는 비·눈 파티클. 폭우 소음 감쇠는 규칙이라 `NoiseSystem`이 생성 때 받은 배율 함수로 `WeatherRules`를 직접 읽는다. 적 감지 배율은 `CreatureBrain`이 `GameServices.WeatherEnemySightMultiplier`로 읽는다. 날씨 소리와 낙진은 아직 없다.
+  - `DayNightCycle`은 `Gradient` 대신 `DayNightDefinition`(해 뜨고 지는 분, 전이 시간, 낮·밤 밝기·색, 하늘색)과 순수 함수 `DayNightMath`로 계산한다. 실내에도 같은 밝기를 쓴다. 하늘색은 카메라 배경색이고, 해·달은 `Sky` 레이어 스프라이트를 카메라 자식으로 두고 호 위의 로컬 위치를 분마다 바꾼다(Cinemachine보다 한 프레임 늦지 않게). 하늘만 비추는 Global Light 2D(`SkyLight`)를 따로 두어 해·달이 어두워지지 않게 한다(RENDERING_RULES.md 8장).
+  - 밤 좀비: `CreatureDefinition`의 밤 배율(속도·피해·감지)과 `SpawnGroupDefinition.nightExtraCount`를 쓴다. 해가 지면 스포너가 추가분만 더 내보내고, 낮에 잡은 적은 리스폰 시간이 지나야 돌아온다. 밤에 맵에 들어오면 처음부터 추가분까지 낸다.
+  - 빗물 통: `WeatherSystem.RainMinutesTotal`(비가 온 분의 누적, 저장됨)과 마지막으로 본 값의 차이만큼 채워서, 은신처에 없을 때나 잠으로 건너뛴 시간에 내린 비도 받는다. 계산은 `CreatureStatRules`가 맡는다.
 - `EnvironmentZoneRegistry` + `RadiationZone`·`HeatZone`(모닥불 주변 등): 맵에 놓은 사각형 영역이다. 물리 콜라이더가 아니라 `Bounds`로 등록한다. 생존 시스템이 분마다 플레이어 위치가 들어 있는 구역을 조회한다.
 
 ### 4.2 플레이어 (`Player/`)
@@ -285,6 +293,8 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 ### 4.8 사망·난이도
 
 - `DifficultyDefinition`(쉬움/보통/어려움): 스탯 감소 배율, 적 피해·체력 배율, 사망 드롭 규칙(`DropRule`: 재료만 / 가방 전부 / 장비 포함 전부)
+  - **[MVP 8단계 현황]** 실제 필드는 허기·갈증 감소 배율, 적 체력·피해 배율, 상자 보상 개수 배율, 채집물·적 리스폰 시간 배율, `DeathDropScope`다. 적의 수는 바꾸지 않는다. 적용은 순수 함수 `DifficultyRules`·`DeathDropRules`가 맡고, 지금 난이도는 `GameServices.Difficulty`다. 장비 칸이 아직 없어서 어려움(`BagAndEquipment`)은 보통과 같게 가방 전부를 떨어뜨린다.
+  - **타이틀 화면:** Boot의 `TitleScreenUI`가 '이어하기'(저장이 있을 때만)와 '새 게임'을 고르게 한다. 새 게임은 난이도와 계절 길이(`WorldClockDefaults.seasonLengthOptionsDays`)를 고르고, 저장이 있으면 덮어쓸지 한 번 묻는다. 고르기 전에는 `WorldClock.IsPaused`로 시간이 멈추고 플레이어 Rigidbody2D는 꺼져 있으며, `MapLoader.BeginGame()`이 불릴 때 첫 맵을 불러온다. 시작하면 `GameServices.GameStarted`가 발행된다.
 - `WorldSettings`(저장되는 C# 클래스): 난이도 id, 계절 길이(일), 하루가 현실로 몇 초인지(`realSecondsPerDay`). 월드를 만들 때 고르고 저장한다. 하루 자체는 항상 게임 내 1440분(`WorldClock.MinutesPerDay`)으로 고정이다.
 - 사망 처리:
   1. 난이도의 `DropRule`대로 아이템을 꺼내 `DeathBagRecord { mapId, position, items }`를 만든다. 이전 기록은 덮어쓴다 (마지막 하나만).
@@ -319,7 +329,7 @@ WorldSaveData (목표 스키마, 지금은 일부만 구현됨)
 └─ deathBag        { mapId, position, items } 또는 null
 ```
 
-3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. `version 2`(4·5단계)에서 `stats`, `statusEffects`, `inventory.slots[].durability`, `hubStructures`가 늘었다. `version 4`(6단계)에서 `deathBag`, `version 5`(7단계)에서 `loreNoteIds`(lore)가 늘었다. 손 모드·장비·hub의 나머지(파밍·전력)·mapUnlocks는 해당 단계에서 필드를 추가하며 채운다.
+3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. `version 2`(4·5단계)에서 `stats`, `statusEffects`, `inventory.slots[].durability`, `hubStructures`가 늘었다. `version 4`(6단계)에서 `deathBag`, `version 5`(7단계)에서 `loreNoteIds`(lore), `version 6`(8단계)에서 `weatherId`·`weatherEndsAtMinute`가 늘었다. `settings`(난이도·계절 길이)는 이어하기 때 `WorldClock.ApplySettings`로 되돌린다. 손 모드·장비·hub의 나머지(파밍·전력)·mapUnlocks는 해당 단계에서 필드를 추가하며 채운다.
 
 - `JsonUtility` 또는 Newtonsoft로 `Application.persistentDataPath/saves/<slot>.json`에 저장한다.
 

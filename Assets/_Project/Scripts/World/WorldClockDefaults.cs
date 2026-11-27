@@ -14,10 +14,13 @@ namespace Game.World
         [SerializeField] private string difficultyId = "";
         [SerializeField] private int seasonLengthDays = 0;
         [SerializeField] private float realSecondsPerDay = 0f;
+        [Tooltip("새 게임 화면에서 고를 수 있는 계절 길이(일).")]
+        [SerializeField] private int[] seasonLengthOptionsDays = System.Array.Empty<int>();
 
         public long StartMinutes => startMinutes;
         public string DifficultyId => difficultyId;
         public int SeasonLengthDays => seasonLengthDays;
         public float RealSecondsPerDay => realSecondsPerDay;
+        public System.Collections.Generic.IReadOnlyList<int> SeasonLengthOptionsDays => seasonLengthOptionsDays;
     }
 }

@@ -1,6 +1,7 @@
 using Game.Combat;
 using Game.Core;
 using Game.Player;
+using Game.World;
 using UnityEngine;
 
 namespace Game.AI
@@ -53,7 +54,7 @@ namespace Game.AI
 
         private void Start()
         {
-            if (health != null) health.Initialize(definition != null ? definition.MaxHealth : 0f);
+            if (health != null) health.Initialize(CreatureStatRules.MaxHealth(definition, GameServices.Difficulty));
             playerHands = GameServices.PlayerInventory != null ? GameServices.PlayerInventory.GetComponent<PlayerHands>() : null;
             ChangeState(idleState);
         }
@@ -73,6 +74,8 @@ namespace Game.AI
             if (health.IsDead || health.IsKnockedBack) return;
             currentState?.Tick(this, Time.fixedDeltaTime);
         }
+
+        private static bool IsNight => GameServices.DayNight != null && GameServices.DayNight.IsNight;
 
         internal void ChangeState(ICreatureState next)
         {
@@ -95,7 +98,7 @@ namespace Game.AI
         {
             if (body == null || definition == null) return;
             float dx = targetPosition.x - body.position.x;
-            float moveX = Mathf.Abs(dx) < StopDistanceTiles ? 0f : Mathf.Sign(dx) * definition.MoveSpeedTiles;
+            float moveX = Mathf.Abs(dx) < StopDistanceTiles ? 0f : Mathf.Sign(dx) * CreatureStatRules.MoveSpeed(definition, IsNight);
             body.linearVelocity = new Vector2(moveX, body.linearVelocity.y);
         }
 
@@ -104,7 +107,7 @@ namespace Game.AI
         {
             if (!TryGetPlayerPosition(out Vector2 playerPosition) || definition == null || body == null) return false;
 
-            float range = definition.SightRangeTiles;
+            float range = CreatureStatRules.SightRange(definition, IsNight, GameServices.WeatherEnemySightMultiplier);
             if (playerHands != null && playerHands.Mode == HandMode.Beast) range *= definition.BeastHandSightMultiplier;
             if (combatSettings != null && GameServices.PlayerInputReader != null && GameServices.PlayerInputReader.CrouchHeld)
                 range *= combatSettings.CrouchSightMultiplier;
@@ -133,7 +136,7 @@ namespace Game.AI
             if (dir == 0f) dir = 1f;
             attackHitboxAnchor.localPosition = new Vector3(dir * definition.AttackRangeTiles, attackHitboxAnchor.localPosition.y, 0f);
             Vector2 knockback = new Vector2(dir * definition.AttackKnockbackForce, 0f);
-            var info = new DamageInfo(definition.AttackDamage, DamageKind.Claw, definition.AttackBleedChance, knockback, gameObject);
+            var info = new DamageInfo(CreatureStatRules.AttackDamage(definition, IsNight, GameServices.Difficulty), DamageKind.Claw, definition.AttackBleedChance, knockback, gameObject);
             attackHitbox.Activate(info, AttackActiveSeconds);
         }
 

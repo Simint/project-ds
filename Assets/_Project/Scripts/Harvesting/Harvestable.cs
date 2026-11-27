@@ -24,9 +24,14 @@ namespace Game.Harvesting
         private long respawnAtMinute;
 
         public string Id => persistentId != null ? persistentId.Id : "";
-        public string InteractPrompt => definition != null ? definition.DisplayName : "";
+        [SerializeField] private string winterPrompt = "겨울이라 채집할 수 없다";
+
+        public string InteractPrompt => IsBlockedByWinter ? winterPrompt : definition != null ? definition.DisplayName : "";
         public HandRequirement RequiredHand => definition != null ? definition.RequiredHand : HandRequirement.Any;
-        public float HoldSecondsRequired => definition != null ? definition.HoldSeconds : 0f;
+        public float HoldSecondsRequired => IsBlockedByWinter ? 0f : definition != null ? definition.HoldSeconds : 0f;
+
+        /// <summary>식물은 겨울에 채집할 수 없다(5.6 겨울).</summary>
+        private bool IsBlockedByWinter => definition != null && definition.IsPlant && GameServices.Seasons != null && GameServices.Seasons.IsWinter;
 
         private void Awake()
         {
@@ -38,7 +43,7 @@ namespace Game.Harvesting
 
         public void Interact(GameObject interactor)
         {
-            if (depleted || definition == null) return;
+            if (depleted || definition == null || IsBlockedByWinter) return;
 
             PlayerInventory inventory = interactor != null ? interactor.GetComponentInParent<PlayerInventory>() : null;
             if (inventory == null)
@@ -56,9 +61,8 @@ namespace Game.Harvesting
             DamageHeldToolIfUsed(interactor);
 
             long nowMinute = GameServices.WorldClock != null ? GameServices.WorldClock.TotalMinutes : 0;
-            long respawnAt = definition != null && definition.RespawnDays > 0
-                ? nowMinute + definition.RespawnDays * WorldClock.MinutesPerDay
-                : 0;
+            long respawnMinutes = DifficultyRules.RespawnMinutes(definition.RespawnDays, GameServices.Difficulty);
+            long respawnAt = respawnMinutes > 0 ? nowMinute + respawnMinutes : 0;
             SetDepleted(true, respawnAt);
         }
 

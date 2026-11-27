@@ -35,6 +35,21 @@ namespace Game.Save
             else File.Move(tempPath, path);
         }
 
+        /// <summary>새 게임을 시작할 때 기존 저장을 지운다(자동 저장 1칸, 타이틀에서 확인을 받은 뒤).</summary>
+        public void Delete()
+        {
+            string path = Path.Combine(saveDirectory, FileName);
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch (System.Exception e) when (e is IOException || e is System.UnauthorizedAccessException)
+            {
+                // 지우지 못해도 새 게임은 그대로 시작한다 — 첫 자동 저장이 이 파일을 덮어쓴다.
+                Game.Core.GameLog.Warning("Save", $"기존 저장을 지우지 못했습니다(새 게임은 계속): {e.Message}");
+            }
+        }
+
         /// <summary>저장 파일이 없으면(첫 실행) null을 돌려준다. 옛 버전 파일도 그대로 읽는다 — 새로
         /// 생긴 필드는 JsonUtility가 C# 기본값으로 채운다 (WorldSaveData.CurrentVersion 참고). 파일이
         /// 손상돼 읽을 수 없으면(깨진 JSON 등) 경고만 남기고 null을 돌려준다 — 디스크 입출력은 에이전트가

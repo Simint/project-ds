@@ -15,7 +15,11 @@ namespace Game.AI
         [Tooltip("스포너 위치에서 무작위로 흩어지는 반경 (타일). 0이면 모두 같은 자리.")]
         [SerializeField] [Min(0f)] private float spawnRadiusTiles = 0f;
 
+        [Tooltip("밤에 더 내보내는 수 (5.6 8단계 \"밤에는 수가 늘어난다\").")]
+        [SerializeField] [Min(0)] private int nightExtraCount = 0;
+
         public int MaxAliveCount => maxAliveCount;
+        public int NightExtraCount => nightExtraCount;
         public float SpawnRadiusTiles => spawnRadiusTiles;
     }
 }

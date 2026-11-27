@@ -82,6 +82,9 @@ namespace Game.Inventory
 
         public int CountOf(string itemId) => Model.CountOf(itemId);
 
+        /// <summary>아이템 id로 정의를 찾는다(없으면 null).</summary>
+        public ItemDefinition FindDefinition(string itemId) => itemDatabase != null ? itemDatabase.Find(itemId) : null;
+
         public int Remove(string itemId, int count) => Model.Remove(itemId, count);
 
         public IEnumerable<(string itemId, int count, long spoilAtMinute, int durability, int slotIndex)> EnumerateSlots()

@@ -6,8 +6,8 @@ namespace Game.World
     /// <summary>
     /// Boot 씬에 하나. <see cref="IWorldClock"/> 구현. 생존·부패·작물은 Time.deltaTime이 아니라
     /// 이 클래스가 쌓는 게임 내 분(minute)을 기준으로 계산한다 (ARCHITECTURE.md 2.5, 4.1).
-    /// GameBootstrap이 Awake에서 저장된 시각으로 덮어쓰므로, 그보다 먼저 기본값을 정해 둬야 한다
-    /// (Unity는 서로 다른 오브젝트의 Awake 순서를 보장하지 않는다).
+    /// 새 게임·이어하기 때 GameBootstrap이 시각과 설정을 덮어쓰므로, 그보다 먼저(Awake에서) 기본값을 정해 둔다
+    /// (Unity는 서로 다른 오브젝트의 Awake 순서를 보장하지 않는다). 타이틀 화면 동안은 IsPaused로 멈춘다.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     public sealed class WorldClock : MonoBehaviour, IWorldClock
@@ -24,6 +24,20 @@ namespace Game.World
 
         public long TotalMinutes => totalMinutes;
         public WorldSettings Settings => settings;
+
+        /// <summary>타이틀 화면처럼 게임이 시작되기 전에는 시간이 흐르지 않는다.</summary>
+        public bool IsPaused { get; set; }
+
+        /// <summary>새 월드가 시작되는 시각(분). 새 게임에서 쓴다.</summary>
+        public long DefaultStartMinutes => defaults != null ? defaults.StartMinutes : 0;
+
+        /// <summary>하루 현실 길이 기본값(초). 저장 파일에 값이 없을 때 쓴다.</summary>
+        public float DefaultRealSecondsPerDay => defaults != null ? defaults.RealSecondsPerDay : 0f;
+
+        /// <summary>새 게임 화면의 계절 길이 선택지와 기본값(일).</summary>
+        public System.Collections.Generic.IReadOnlyList<int> SeasonLengthOptionsDays =>
+            defaults != null ? defaults.SeasonLengthOptionsDays : System.Array.Empty<int>();
+        public int DefaultSeasonLengthDays => defaults != null ? defaults.SeasonLengthDays : 0;
 
         public event Action MinutePassed;
         public event Action HourPassed;
@@ -45,7 +59,7 @@ namespace Game.World
         {
             // defaults가 비어 있으면 settings.RealSecondsPerDay가 0으로 남는다 — 나누기 전에 걸러서
             // Infinity/NaN이 minuteAccumulator로 퍼지지 않게 한다.
-            if (settings.RealSecondsPerDay <= 0f) return;
+            if (IsPaused || settings.RealSecondsPerDay <= 0f) return;
 
             float gameMinutesPerRealSecond = MinutesPerDay / settings.RealSecondsPerDay;
             minuteAccumulator += Time.deltaTime * gameMinutesPerRealSecond;
@@ -77,5 +91,15 @@ namespace Game.World
         }
 
         public void SetTotalMinutes(long minutes) => totalMinutes = minutes;
+
+        /// <summary>새 게임·불러오기에서 월드 설정(난이도·계절 길이)을 바꾼다. 하루 현실 길이가 비어 있으면 기본값을 쓴다.</summary>
+        public void ApplySettings(WorldSettings value)
+        {
+            if (value == null) return;
+            float realSeconds = value.RealSecondsPerDay > 0f ? value.RealSecondsPerDay : DefaultRealSecondsPerDay;
+            int seasonDays = value.SeasonLengthDays > 0 ? value.SeasonLengthDays : settings.SeasonLengthDays;
+            settings = new WorldSettings(value.DifficultyId, seasonDays, realSeconds);
+            minuteAccumulator = 0f;
+        }
     }
 }
