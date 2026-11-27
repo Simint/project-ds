@@ -8,10 +8,10 @@ namespace Game.Player
     {
         [SerializeField] private float transitionSeconds = 0f;
 
-        [Header("임시 그림 색 (그림이 나오기 전까지)")]
-        [SerializeField] private Color humanColor = new Color(0.2f, 0.6f, 1f);
-        [SerializeField] private Color beastColor = new Color(0.8f, 0.35f, 0.15f);
-        [SerializeField] private Color transitioningColor = new Color(0.6f, 0.6f, 0.6f);
+        [Header("몸 그림 색조 (손 모드 그림이 나오기 전까지). 그림에 곱해지므로 흰색 = 원래 색")]
+        [SerializeField] private Color humanColor = Color.white;
+        [SerializeField] private Color beastColor = new Color(1f, 0.82f, 0.7f);
+        [SerializeField] private Color transitioningColor = new Color(0.75f, 0.75f, 0.75f);
 
         public float TransitionSeconds => transitionSeconds;
         public Color HumanColor => humanColor;

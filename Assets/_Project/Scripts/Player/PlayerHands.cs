@@ -62,7 +62,7 @@ namespace Game.Player
             HandModeChanged?.Invoke(Mode);
         }
 
-        /// <summary>그림이 나오기 전까지 플레이어 임시 사각형 색을 손 모드에 맞춘다 (docs/design 9.5).</summary>
+        /// <summary>손 모드 그림이 나오기 전까지 몸 그림 색조로 손 모드를 보여준다 (docs/design 9.5).</summary>
         private void RefreshBodyColor()
         {
             if (bodyRenderer == null || settings == null) return;

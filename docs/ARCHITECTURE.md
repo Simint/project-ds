@@ -199,6 +199,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 ### 4.2 플레이어 (`Player/`)
 
 - `PlayerController`: 상태 머신. Idle/Run/BeastRun은 물리 계산이 같고 프리셋(`PlayerMovementSettings`)만 다르므로 `Grounded` 상태 하나가 맡고, Jump와 Fall은 중력 계산이 달라 따로 상태를 둔다(`Grounded`/`Jumping`/`Falling`, `IPlayerMotionState`). Attack, Harvest, Dig, Interact, Stunned는 해당 시스템이 생기는 단계(3·6·7단계)에서 상태를 추가한다.
+- `PlayerAnimator`(표시 전용): `PlayerController`의 접지 상태(`IsInGroundedState`)·속도·달리기 프리셋을 읽어 Animator 파라미터(`Speed`, `VerticalSpeed`, `Grounded`, `Running`, `MoveSpeedScale`)만 갱신한다. 이동 로직은 애니메이션을 모른다. Animator Controller와 클립은 Art 서브모듈(`Art/Characters/Player/Animations/`)에 있다. 플레이어 그림은 왼쪽을 보고 그렸으므로 `PlayerFacing.artFacesLeft`를 켠다.
 - `PlayerInputReader`: `Controls.inputactions`를 읽어 이동·조준·버튼을 내보낸다. 게임플레이 코드는 Input System을 직접 만지지 않는다.
 - 이동 파라미터는 `PlayerMovementSettings` ScriptableObject에 모은다. 최고 속도, 가속/감속, 점프 높이, 코요테 타임(0.1s), 점프 버퍼(0.1s), 가변 점프, 최대 낙하 속도가 들어간다.
   - 세 프리셋을 둔다: `walk`(두 발 걷기, 기본), `run`(사람 손 + 달리기 키), `beastRun`(짐승 손 + 달리기 키, 네 발). 짐승 손이라도 달리기 키를 누르지 않으면 `walk`다.

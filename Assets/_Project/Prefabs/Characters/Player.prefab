@@ -120,6 +120,7 @@ GameObject:
   - component: {fileID: 4871296524890483842}
   - component: {fileID: 7695255134712147603}
   - component: {fileID: 7584013470388789079}
+  - component: {fileID: 8332770202653423302}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -412,6 +413,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Runtime::Game.Player.PlayerFacing
   inputReader: {fileID: 4376654180812441932}
   bodyRenderer: {fileID: 8391765160237044225}
+  artFacesLeft: 1
 --- !u!114 &1499897778923126131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -477,6 +479,21 @@ MonoBehaviour:
   inputReader: {fileID: 4376654180812441932}
   survival: {fileID: 7323652339077693437}
   settings: {fileID: 11400000, guid: e0f79ba6aaa9f59499199c9a0dc9a21c, type: 2}
+--- !u!114 &8332770202653423302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75e5f24d917899646b6165806b4a3197, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.PlayerAnimator
+  controller: {fileID: 963269600960441317}
+  animator: {fileID: 4029992991224247592}
+  moveSpeedScaleRange: {x: 0.5, y: 2}
 --- !u!1 &7658787558271473459
 GameObject:
   m_ObjectHideFlags: 0
@@ -487,6 +504,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9092896861043873060}
   - component: {fileID: 8391765160237044225}
+  - component: {fileID: 4029992991224247592}
   m_Layer: 0
   m_Name: Sprite
   m_TagString: Untagged
@@ -558,7 +576,7 @@ SpriteRenderer:
   m_SortingLayer: 7
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4626188629257986861, guid: 9f591a4640d661e45ab3f3effe2b31b4, type: 3}
+  m_Sprite: {fileID: 993911145, guid: 49a8fbc4072b6694faf9a583ee1ed793, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -569,3 +587,25 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!95 &4029992991224247592
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7658787558271473459}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: c7aaa8336793467408565673222bbdbc, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

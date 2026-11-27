@@ -42,6 +42,10 @@ namespace Game.Player
         public Rigidbody2D Body => body;
         public PlayerMovementSettings Settings => settings;
         public bool IsGrounded { get; private set; }
+
+        /// <summary>실제로 땅 위 이동 상태인지. IsGrounded(겹침 판정)는 점프 상승 중 OneWayPlatform을
+        /// 통과할 때도 잠깐 true가 되므로, 표시(PlayerAnimator)는 이 값을 쓴다.</summary>
+        public bool IsInGroundedState => currentState == groundedState;
         public float HorizontalInput => inputReader != null ? inputReader.MoveInput.x : 0f;
 
         internal IPlayerMotionState GroundedState => groundedState;
