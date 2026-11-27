@@ -16,6 +16,8 @@ namespace Game.Combat
         [SerializeField] private Collider2D hitboxCollider;
 
         private readonly HashSet<IDamageable> hitThisActivation = new HashSet<IDamageable>();
+        // 피해를 받지 않는 트리거(채집물·상자 등)를 같은 스윙 동안 다시 찾지 않도록 기억한다.
+        private readonly HashSet<Collider2D> ignoredThisActivation = new HashSet<Collider2D>();
         private DamageInfo pendingInfo;
         private float remainingSeconds;
         private bool active;
@@ -39,6 +41,7 @@ namespace Game.Combat
             if (hitboxCollider == null) return;
             pendingInfo = info;
             hitThisActivation.Clear();
+            ignoredThisActivation.Clear();
             remainingSeconds = activeSeconds;
             active = true;
             hitboxCollider.enabled = true;
@@ -55,9 +58,14 @@ namespace Game.Combat
 
         private void TryHit(Collider2D other)
         {
-            if (!active) return;
+            if (!active || ignoredThisActivation.Contains(other)) return;
             IDamageable target = other.GetComponentInParent<IDamageable>();
-            if (target == null || hitThisActivation.Contains(target)) return;
+            if (target == null)
+            {
+                ignoredThisActivation.Add(other);
+                return;
+            }
+            if (hitThisActivation.Contains(target)) return;
             hitThisActivation.Add(target);
             target.TakeDamage(pendingInfo);
         }

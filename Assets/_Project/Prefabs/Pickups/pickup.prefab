@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2737475405925451827}
   - component: {fileID: 1424022188438896199}
   - component: {fileID: 8657213249867274546}
+  - component: {fileID: 4453685961729624465}
   m_Layer: 14
   m_Name: pickup
   m_TagString: Untagged
@@ -82,6 +83,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f5a72da0a7b3af4bbb15d3df30e68c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::Game.Items.Pickup
+--- !u!114 &4453685961729624465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2895966545335073503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e70ef5735b4b3d841b38a181c85c9a77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.ScentSource
+  kind: 1
 --- !u!1 &4415794005015872040
 GameObject:
   m_ObjectHideFlags: 0

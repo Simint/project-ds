@@ -4,6 +4,12 @@ namespace Game.Combat
     /// 추가한다 (docs/design/GAME_DESIGN.md 6.2).</summary>
     public enum NoiseKind
     {
-        Footstep
+        Footstep,
+        /// <summary>잠긴 문을 무기로 쳐서 흔들 때 (4.3 7단계: 큰 소음).</summary>
+        DoorBash,
+        /// <summary>쇠지렛대로 문을 열 때 (작은 소음).</summary>
+        Crowbar,
+        /// <summary>부술 수 있는 벽을 칠 때.</summary>
+        WallHit
     }
 }

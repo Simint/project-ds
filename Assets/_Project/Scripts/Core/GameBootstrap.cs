@@ -3,6 +3,7 @@ using Game.Building;
 using Game.Combat;
 using Game.Crafting;
 using Game.Inventory;
+using Game.Lore;
 using Game.Maps;
 using Game.Player;
 using Game.Save;
@@ -35,6 +36,7 @@ namespace Game.Core
         [SerializeField] private StorageUI storageUI;
         [SerializeField] private CraftingUI craftingUI;
         [SerializeField] private SleepUI sleepUI;
+        [SerializeField] private LoreNotesUI loreNotesUI;
         [SerializeField] private MapDatabase mapDatabase;
 
         private void Awake()
@@ -49,6 +51,7 @@ namespace Game.Core
             if (storageUI == null) Debug.LogError("[GameBootstrap] storageUI 참조가 비어 있습니다.", this);
             if (craftingUI == null) Debug.LogError("[GameBootstrap] craftingUI 참조가 비어 있습니다.", this);
             if (sleepUI == null) Debug.LogError("[GameBootstrap] sleepUI 참조가 비어 있습니다.", this);
+            if (loreNotesUI == null) Debug.LogError("[GameBootstrap] loreNotesUI 참조가 비어 있습니다.", this);
             if (mapDatabase == null) Debug.LogError("[GameBootstrap] mapDatabase 참조가 비어 있습니다.", this);
 
             GameServices.RegisterWorldClock(worldClock);
@@ -58,6 +61,7 @@ namespace Game.Core
             GameServices.RegisterStorageUI(storageUI);
             GameServices.RegisterCraftingUI(craftingUI);
             GameServices.RegisterSleepUI(sleepUI);
+            GameServices.RegisterLoreNotesUI(loreNotesUI);
 
             var mapStateRegistry = new MapStateRegistry();
             var saveService = new SaveService();
@@ -66,6 +70,8 @@ namespace Game.Core
             var heatZoneRegistry = new HeatZoneRegistry();
             var noiseSystem = new NoiseSystem();
             var deathBagRegistry = new DeathBagRegistry();
+            var scentSystem = new ScentSystem();
+            var loreCollection = new LoreCollection();
             GameServices.RegisterMapStateRegistry(mapStateRegistry);
             GameServices.RegisterSaveService(saveService);
             GameServices.RegisterStorageRegistry(storageRegistry);
@@ -73,6 +79,8 @@ namespace Game.Core
             GameServices.RegisterHeatZoneRegistry(heatZoneRegistry);
             GameServices.RegisterNoiseSystem(noiseSystem);
             GameServices.RegisterDeathBagRegistry(deathBagRegistry);
+            GameServices.RegisterScentSystem(scentSystem);
+            GameServices.RegisterLoreCollection(loreCollection);
 
             WorldSaveData save = saveService.Load();
             if (save != null) ApplySave(save, mapStateRegistry, hubStructureRegistry, deathBagRegistry);
@@ -94,6 +102,7 @@ namespace Game.Core
 
             hubStructureRegistry.SetCurrent(save.hubStructures);
             deathBagRegistry.SetFromSave(save.deathBag);
+            GameServices.LoreCollection?.SetFromSave(save.loreNoteIds);
 
             if (playerSurvival != null)
             {

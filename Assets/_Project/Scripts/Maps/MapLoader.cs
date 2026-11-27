@@ -242,6 +242,9 @@ namespace Game.Maps
 
             if (deathBagRegistry != null) data.deathBag = deathBagRegistry.Current;
 
+            if (GameServices.LoreCollection != null)
+                data.loreNoteIds = new List<string>(GameServices.LoreCollection.Ids);
+
             if (playerSurvival != null)
                 foreach ((string id, float value) in playerSurvival.EnumerateStats())
                     data.stats.Add(new StatSaveData { id = id, value = value });

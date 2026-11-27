@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 4923444521692014943}
   - component: {fileID: 520586874033171085}
   - component: {fileID: 1602940528403225131}
+  - component: {fileID: 5751309844969694374}
   m_Layer: 9
   m_Name: FeralDog
   m_TagString: Untagged
@@ -251,6 +252,19 @@ MonoBehaviour:
   settings: {fileID: 11400000, guid: e03a919027ad8a84ca141bb7bb712e78, type: 2}
   root: {fileID: 8469405875400403551}
   fillImage: {fileID: 7261851518884617086}
+--- !u!114 &5751309844969694374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4510319549859824327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e70ef5735b4b3d841b38a181c85c9a77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.ScentSource
+  kind: 2
 --- !u!1 &5285928287937268955
 GameObject:
   m_ObjectHideFlags: 0

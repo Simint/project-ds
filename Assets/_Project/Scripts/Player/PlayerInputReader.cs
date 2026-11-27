@@ -23,6 +23,8 @@ namespace Game.Player
         private InputAction switchHandAction;
         private InputAction interactAction;
         private InputAction attackAction;
+        private InputAction sniffAction;
+        private InputAction toggleNotesAction;
         private InputAction uiNavigateAction;
         private InputAction uiSubmitAction;
         private InputAction uiCancelAction;
@@ -82,6 +84,10 @@ namespace Game.Player
 
         /// <summary>바라보는 방향으로 근접 공격 (마우스 왼쪽 클릭/패드 공격 버튼, docs/design/GAME_DESIGN.md 6.5).</summary>
         public event Action AttackPressed;
+        /// <summary>R키(패드 오른쪽 스틱 누르기) 후각 탐지 (docs/design/GAME_DESIGN.md 3.2).</summary>
+        public event Action SniffPressed;
+        /// <summary>N키(패드 십자 위) 쪽지 기록 목록. 목록 자신이 잠금을 걸기 때문에 가방처럼 잠금과 무관하게 발행한다.</summary>
+        public event Action ToggleNotesPressed;
         public event Action UISubmitPressed;
         public event Action UICancelPressed;
         public event Action ToggleInventoryPressed;
@@ -119,6 +125,8 @@ namespace Game.Player
             switchHandAction = map.FindAction("SwitchHand", throwIfNotFound: true);
             interactAction = map.FindAction("Interact", throwIfNotFound: true);
             attackAction = map.FindAction("Attack", throwIfNotFound: true);
+            sniffAction = map.FindAction("Sniff", throwIfNotFound: true);
+            toggleNotesAction = map.FindAction("ToggleNotes", throwIfNotFound: true);
             uiNavigateAction = map.FindAction("UINavigate", throwIfNotFound: true);
             uiSubmitAction = map.FindAction("UISubmit", throwIfNotFound: true);
             uiCancelAction = map.FindAction("UICancel", throwIfNotFound: true);
@@ -155,6 +163,8 @@ namespace Game.Player
             switchHandAction.Enable();
             interactAction.Enable();
             attackAction.Enable();
+            sniffAction.Enable();
+            toggleNotesAction.Enable();
             uiNavigateAction.Enable();
             uiSubmitAction.Enable();
             uiCancelAction.Enable();
@@ -175,6 +185,8 @@ namespace Game.Player
             interactAction.performed += HandleInteractPerformed;
             interactAction.canceled += HandleInteractCanceled;
             attackAction.performed += HandleAttackPerformed;
+            sniffAction.performed += HandleSniffPerformed;
+            toggleNotesAction.performed += HandleToggleNotesPerformed;
             uiSubmitAction.performed += HandleUISubmitPerformed;
             uiCancelAction.performed += HandleUICancelPerformed;
             toggleInventoryAction.performed += HandleToggleInventoryPerformed;
@@ -201,6 +213,8 @@ namespace Game.Player
             interactAction.performed -= HandleInteractPerformed;
             interactAction.canceled -= HandleInteractCanceled;
             attackAction.performed -= HandleAttackPerformed;
+            sniffAction.performed -= HandleSniffPerformed;
+            toggleNotesAction.performed -= HandleToggleNotesPerformed;
             uiSubmitAction.performed -= HandleUISubmitPerformed;
             uiCancelAction.performed -= HandleUICancelPerformed;
             toggleInventoryAction.performed -= HandleToggleInventoryPerformed;
@@ -224,6 +238,8 @@ namespace Game.Player
             switchHandAction.Disable();
             interactAction.Disable();
             attackAction.Disable();
+            sniffAction.Disable();
+            toggleNotesAction.Disable();
             uiNavigateAction.Disable();
             uiSubmitAction.Disable();
             uiCancelAction.Disable();
@@ -326,6 +342,13 @@ namespace Game.Player
         {
             if (!IsLocked) AttackPressed?.Invoke();
         }
+
+        private void HandleSniffPerformed(InputAction.CallbackContext context)
+        {
+            if (!IsLocked) SniffPressed?.Invoke();
+        }
+
+        private void HandleToggleNotesPerformed(InputAction.CallbackContext context) => ToggleNotesPressed?.Invoke();
 
         /// <summary>가방 자신이 잠금을 걸기 때문에(Tab으로 열면 그 뒤로 잠겨서) ToggleBuildMode/UICancel과
         /// 같은 이유로 잠금과 무관하게 항상 발행한다 — 안 그러면 Tab으로 연 가방을 Tab으로 못 닫는다.

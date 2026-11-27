@@ -29,6 +29,8 @@ namespace Game.Player
         private string lastShownControlScheme;
 
         private bool holding;
+        private bool promptDirty;
+        private int lastSelectedSlotIndex = -1;
         private float holdElapsed;
 
         private void Awake()
@@ -48,6 +50,9 @@ namespace Game.Player
             if (inputReader == null) return;
             inputReader.InteractPressed += HandleInteractPressed;
             inputReader.InteractReleased += HandleInteractReleased;
+            // 대상은 그대로인데 문구가 바뀌는 경우(잠긴 문: 손 모드·든 도구·열쇠 유무에 따라)를 위해 다시 그린다.
+            if (hands != null) hands.HandModeChanged += HandleHandModeChanged;
+            if (heldItem != null && heldItem.Inventory != null) heldItem.Inventory.Model.Changed += MarkPromptDirty;
         }
 
         private void OnDisable()
@@ -55,7 +60,13 @@ namespace Game.Player
             if (inputReader == null) return;
             inputReader.InteractPressed -= HandleInteractPressed;
             inputReader.InteractReleased -= HandleInteractReleased;
+            if (hands != null) hands.HandModeChanged -= HandleHandModeChanged;
+            if (heldItem != null && heldItem.Inventory != null) heldItem.Inventory.Model.Changed -= MarkPromptDirty;
         }
+
+        private void HandleHandModeChanged(HandMode mode) => promptDirty = true;
+
+        private void MarkPromptDirty() => promptDirty = true;
 
         private void Update()
         {
@@ -71,11 +82,19 @@ namespace Game.Player
             // target이 그대로여도, 보여 주고 있던 키 표시의 장치(키보드/패드)가 바뀌었으면 다시 그린다.
             string activeScheme = inputReader != null ? inputReader.ActiveControlScheme : null;
             bool schemeChangedWhileShown = !targetChanged && nearest != null && activeScheme != lastShownControlScheme;
-            if (targetChanged || schemeChangedWhileShown)
+            int selectedSlot = heldItem != null ? heldItem.SelectedSlotIndex : -1;
+            if (selectedSlot != lastSelectedSlotIndex)
+            {
+                lastSelectedSlotIndex = selectedSlot;
+                promptDirty = true;
+            }
+
+            if (targetChanged || schemeChangedWhileShown || (promptDirty && nearest != null))
             {
                 currentTarget = nearest;
                 currentTargetTransform = nearestTransform;
                 lastShownControlScheme = activeScheme;
+                promptDirty = false;
                 RefreshPrompt();
             }
 

@@ -5,6 +5,8 @@ namespace Game.Items
     {
         None,
         Axe,
-        Pickaxe
+        Pickaxe,
+        /// <summary>잠긴 문을 열쇠 없이 연다 (docs/design/GAME_DESIGN.md 4.3 7단계 범위).</summary>
+        Crowbar
     }
 }

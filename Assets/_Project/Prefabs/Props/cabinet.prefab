@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7932756312456521533}
   - component: {fileID: 1629132928460881343}
   - component: {fileID: 899981668016157362}
+  - component: {fileID: 7111482183058217142}
   m_Layer: 13
   m_Name: cabinet
   m_TagString: Untagged
@@ -107,20 +108,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::Game.Items.Container
   persistentId: {fileID: 1629132928460881343}
-  contents:
-  - itemId: fiber
-    count: 2
-  - itemId: scrap_metal
-    count: 1
-  - itemId: water_bottle
-    count: 2
-  - itemId: bandage
-    count: 1
-  - itemId: splint
-    count: 1
-  - itemId: medicine_pills
-    count: 1
+  lootTable: {fileID: 0}
   interactPrompt: "\uB4A4\uC9C0\uAE30"
+  scentSource: {fileID: 7111482183058217142}
+--- !u!114 &7111482183058217142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3902168128931177836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e70ef5735b4b3d841b38a181c85c9a77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.ScentSource
+  kind: 1
 --- !u!1 &4799326267600346278
 GameObject:
   m_ObjectHideFlags: 0

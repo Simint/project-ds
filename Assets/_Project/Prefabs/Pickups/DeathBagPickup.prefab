@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 8306574009984413808}
   - component: {fileID: 3367772737508200395}
   - component: {fileID: 7197047570669273054}
+  - component: {fileID: 4967530458306279438}
   m_Layer: 13
   m_Name: DeathBagPickup
   m_TagString: Untagged
@@ -185,3 +186,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::Game.Items.DeathBagPickup
   interactPrompt: "\uC18C\uC9C0\uD488 \uC8FC\uBA38\uB2C8 \uC90D\uAE30"
+--- !u!114 &4967530458306279438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3659774157331404629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e70ef5735b4b3d841b38a181c85c9a77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.ScentSource
+  kind: 1

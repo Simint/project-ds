@@ -18,6 +18,7 @@ namespace Game.Editor.Harness
         {
             { "Player", "Ground" }, { "Player", "OneWayPlatform" }, { "Player", "Structure" },
             { "Player", "Enemy" }, { "Player", "Interactable" }, { "Player", "Pickup" }, { "Player", "EnemyAttack" },
+            { "PlayerAttack", "Interactable" }, // 잠긴 문·부술 수 있는 벽 타격 (MVP 7단계)
             { "Enemy", "Ground" }, { "Enemy", "OneWayPlatform" }, { "Enemy", "Structure" }, { "Enemy", "PlayerAttack" },
             { "Pickup", "Ground" }, { "Pickup", "OneWayPlatform" }, { "Pickup", "Structure" },
         };

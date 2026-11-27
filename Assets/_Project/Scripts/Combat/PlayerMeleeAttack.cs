@@ -82,13 +82,15 @@ namespace Game.Combat
             {
                 ItemDefinition weapon = heldItem != null ? heldItem.SelectedDefinition : null;
                 if (weapon == null || !weapon.IsWeapon) return; // 사람 손은 무기 없이 못 때린다 (3.1)
+                // 내구도가 다 닳은 도구는 무기로도 못 쓴다 (7장 "내구도 0이면 쓸 수 없다").
+                if (heldItem.SelectedSlot != null && heldItem.SelectedSlot.Durability == 0) return;
                 WeaponData data = weapon.Weapon;
                 damage = data.Damage;
                 cooldown = data.AttackCooldownSeconds;
                 staminaCost = data.StaminaCost;
                 range = data.RangeTiles;
                 knockback = data.KnockbackForce;
-                kind = data.Kind == WeaponKind.Blade ? DamageKind.Blade : DamageKind.Blunt;
+                kind = weapon.IsTool ? DamageKind.Tool : data.Kind == WeaponKind.Blade ? DamageKind.Blade : DamageKind.Blunt;
             }
 
             SurvivalStat stamina = survival.Stats.Get(StatIds.Stamina);

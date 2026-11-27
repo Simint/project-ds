@@ -70,7 +70,8 @@ CinemachinePixelPerfect는 쓰지 않는다.
 - `Player` ↔ `Ground`, `OneWayPlatform`, `Structure`, `Enemy`(접촉 데미지가 있을 때), `Interactable`(트리거), `Pickup`(트리거), `EnemyAttack`
 - `Enemy` ↔ `Ground`, `OneWayPlatform`, `Structure`, `PlayerAttack`
 - `Pickup` ↔ `Ground`, `OneWayPlatform`, `Structure`
-- 나머지는 모두 끈다. 특히 `Interactable`은 `Player`와만 닿는다.
+- `PlayerAttack` ↔ `Interactable`(트리거) — 잠긴 문을 무기로 치거나 부술 수 있는 벽을 부술 때. 타격 판정은 `IDamageable`을 구현한 대상만 받으므로 채집물 등 다른 상호작용 대상에는 영향이 없다.
+- 나머지는 모두 끈다. 특히 `Interactable`은 `Player`, `PlayerAttack`과만 닿는다.
 
 땅 판정(Ground Check)은 `Ground | OneWayPlatform | Structure` 마스크로 한다. 마스크는 `GameLayers`에서만 가져온다.
 

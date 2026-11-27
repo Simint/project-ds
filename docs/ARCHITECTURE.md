@@ -163,8 +163,8 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 |---|---|---|
 | `Harvestable` | `Depleted` 여부, 리스폰 시각 | 정의의 리스폰 일수가 지나면 재생성 |
 | `Container`(상자) | 열림 여부, 남은 내용물(아이템 id·수량) | 보급 상자만 리스폰 |
-| `LockedDoor` | 잠김/열림(열쇠)/열림(쇠지렛대)/부서짐 | 없음 (영구) |
-| `BreakableWall` | 부서짐 여부 | 없음 |
+| `LockedDoor` | 잠김/열림(열쇠)/열림(쇠지렛대) (무기로 치면 흔들리기만 해서 부서짐 상태는 없다) | 없음 (영구) |
+| `BreakableWall` | 부서짐 여부 (남은 내구는 저장하지 않는다) | 없음 |
 | `Bridge` | 이어짐 여부 | 없음 |
 | `DigSpot` | 파냄 여부 | 없음 |
 | `EnemySpawner` | 다음 리스폰 시각, 남은 개체 수 | 정의의 리스폰 시간 |
@@ -201,6 +201,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
   - `Beast` 동안: 허기 감소 배율을 생존 스탯 모디파이어로 등록한다. 손에 든 아이템 사용을 막는다. 장갑 슬롯은 해제한다.
   - 행동 허용 검사는 `HandRequirement { Any, Human, Beast }` 하나로 통일한다. 아이템(`ItemDefinition.requiredHand`), 레시피, 상호작용(`IInteractable.RequiredHand`)이 이 값을 가진다.
 - **`ScentSense`(후각):** 쿨타임과 허기 비용이 있다. `ScentSystem`에 등록된 `ScentSource`(음식, 아이템, 적, 방사능 구역, DigSpot)를 반경 안에서 찾아 FX 풀로 흔적을 보여 준다.
+  - **[MVP 7단계 현황]** 대상은 `DigSpot`, 떨어진 아이템·사망 주머니·캐비닛(털리면 끔), 적이다. 대상 고르기는 순수 함수 `ScentQuery`(반경 + `SolidMask` Linecast로 벽 너머 제외)이고, 흔적은 `Awake`에서 미리 만든 `SpriteRenderer`(`Effects` 레이어, 종류별 색)를 재사용해 대상을 따라가게 한다. 수치는 `ScentSettings`(Data/Player/).
 - 땅 판정: 발밑 `Physics2D.OverlapBox`, 마스크 `GameLayers.GroundCheckMask`
 - 상호작용: 플레이어 주변 `OverlapCircle`로 `Interactable` 레이어를 찾고 가장 가까운 `IInteractable`을 고른다. 이때 `RequiredHand`가 현재 손 모드와 맞아야 한다. 결과 배열은 미리 할당한다 (`OverlapCircle(..., ContactFilter2D, Collider2D[])`).
 
@@ -295,6 +296,7 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 - `LoreNoteDefinition`: id, 제목, 본문(로컬라이즈 키), 분류
 - 맵에는 `LoreNotePickup`(PersistentId)으로 놓는다. 주우면 `LoreCollection`(읽은 id 집합)에 추가된다. 일부 쪽지는 맵을 해금한다.
 - 은신처의 게시판 UI가 `LoreCollection`을 보여 준다.
+- **[MVP 7단계 현황]** 게시판 대신 어디서나 여는 `LoreNotesUI`(N키, 패드 십자 위)가 목록과 본문을 보여 준다. 쪽지를 주우면 그 쪽지가 펼쳐진 채로 열린다. 쪽지 정의는 `LoreDatabase`(Data/Lore/)로 id에서 찾는다. 맵 해금은 아직 넣지 않았다.
 
 ### 4.10 저장 (`Save/`)
 
@@ -317,7 +319,7 @@ WorldSaveData (목표 스키마, 지금은 일부만 구현됨)
 └─ deathBag        { mapId, position, items } 또는 null
 ```
 
-3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. `version 2`(4·5단계)에서 `stats`, `statusEffects`, `inventory.slots[].durability`, `hubStructures`가 늘었다. 손 모드·장비·hub의 나머지(파밍·전력)·mapUnlocks·lore·사망 주머니는 해당 단계에서 필드를 추가하며 채운다.
+3단계에서 구현한 `version 1`은 `settings`, `clock.totalMinutes`, `player`(mapId·위치만), `inventory.slots`(itemId·count만), `maps`만 채운다. `version 2`(4·5단계)에서 `stats`, `statusEffects`, `inventory.slots[].durability`, `hubStructures`가 늘었다. `version 4`(6단계)에서 `deathBag`, `version 5`(7단계)에서 `loreNoteIds`(lore)가 늘었다. 손 모드·장비·hub의 나머지(파밍·전력)·mapUnlocks는 해당 단계에서 필드를 추가하며 채운다.
 
 - `JsonUtility` 또는 Newtonsoft로 `Application.persistentDataPath/saves/<slot>.json`에 저장한다.
 

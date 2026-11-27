@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 1499897778923126131}
   - component: {fileID: 4871296524890483842}
   - component: {fileID: 7695255134712147603}
+  - component: {fileID: 7584013470388789079}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -461,6 +462,21 @@ MonoBehaviour:
   inputReader: {fileID: 4376654180812441932}
   hands: {fileID: 7050079904660406002}
   settings: {fileID: 11400000, guid: 48115e6732ad18b45a87854271c60520, type: 2}
+--- !u!114 &7584013470388789079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143551093432253046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adebc1d7339c6a5439ca983c4ebaed87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::Game.Player.ScentSense
+  inputReader: {fileID: 4376654180812441932}
+  survival: {fileID: 7323652339077693437}
+  settings: {fileID: 11400000, guid: e0f79ba6aaa9f59499199c9a0dc9a21c, type: 2}
 --- !u!1 &7658787558271473459
 GameObject:
   m_ObjectHideFlags: 0

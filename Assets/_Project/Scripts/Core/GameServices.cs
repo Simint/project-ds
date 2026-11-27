@@ -3,6 +3,7 @@ using Game.Building;
 using Game.Combat;
 using Game.Crafting;
 using Game.Inventory;
+using Game.Lore;
 using Game.Maps;
 using Game.Player;
 using Game.Save;
@@ -31,6 +32,9 @@ namespace Game.Core
         public static HeatZoneRegistry HeatZoneRegistry { get; private set; }
         public static NoiseSystem NoiseSystem { get; private set; }
         public static DeathBagRegistry DeathBagRegistry { get; private set; }
+        public static ScentSystem ScentSystem { get; private set; }
+        public static LoreCollection LoreCollection { get; private set; }
+        public static LoreNotesUI LoreNotesUI { get; private set; }
         public static BuildModeController BuildModeController { get; private set; }
         public static BuildGrid BuildGrid { get; private set; }
         public static StorageUI StorageUI { get; private set; }
@@ -59,6 +63,9 @@ namespace Game.Core
         public static void RegisterHeatZoneRegistry(HeatZoneRegistry registry) => HeatZoneRegistry = registry;
         public static void RegisterNoiseSystem(NoiseSystem system) => NoiseSystem = system;
         public static void RegisterDeathBagRegistry(DeathBagRegistry registry) => DeathBagRegistry = registry;
+        public static void RegisterScentSystem(ScentSystem system) => ScentSystem = system;
+        public static void RegisterLoreCollection(LoreCollection collection) => LoreCollection = collection;
+        public static void RegisterLoreNotesUI(LoreNotesUI ui) => LoreNotesUI = ui;
 
         /// <summary>은신처 씬에만 있는 컴포넌트라, 그 씬이 열려 있을 때만 OnEnable/OnDisable로 등록·해제한다
         /// (다른 서비스들과 달리 Boot에서 한 번만 등록하지 않는다).</summary>
@@ -96,6 +103,9 @@ namespace Game.Core
             HeatZoneRegistry = null;
             NoiseSystem = null;
             DeathBagRegistry = null;
+            ScentSystem = null;
+            LoreCollection = null;
+            LoreNotesUI = null;
             BuildModeController = null;
             BuildGrid = null;
             StorageUI = null;

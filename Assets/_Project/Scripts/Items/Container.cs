@@ -13,8 +13,11 @@ namespace Game.Items
     public sealed class Container : MonoBehaviour, IInteractable, IPersistentObject
     {
         [SerializeField] private PersistentId persistentId;
-        [SerializeField] private ItemAmount[] contents = System.Array.Empty<ItemAmount>();
+        [Tooltip("뒤지면 가방에 들어오는 구성. 보상은 밸런스라 비공개 Data/Loot/ 에셋을 참조만 한다.")]
+        [SerializeField] private LootTableDefinition lootTable;
         [SerializeField] private string interactPrompt = "뒤지기";
+        [Tooltip("후각 탐지 대상(선택). 털리면 꺼서 더 이상 냄새가 나지 않게 한다.")]
+        [SerializeField] private ScentSource scentSource;
 
         private bool looted;
 
@@ -39,17 +42,26 @@ namespace Game.Items
                 return;
             }
 
-            foreach (ItemAmount amount in contents)
-                if (amount.Count > 0) inventory.Collect(amount.ItemId, amount.Count);
+            if (lootTable != null)
+            {
+                foreach (ItemAmount amount in lootTable.Items)
+                    if (amount.Count > 0) inventory.Collect(amount.ItemId, amount.Count);
+            }
 
-            looted = true;
+            SetLooted(true);
         }
 
         public ObjectStateRecord Capture() => new ObjectStateRecord(looted ? 1 : 0, 0, null);
 
         public void Restore(ObjectStateRecord record, long nowMinute)
         {
-            looted = record.State == 1;
+            SetLooted(record.State == 1);
+        }
+
+        private void SetLooted(bool value)
+        {
+            looted = value;
+            if (scentSource != null) scentSource.enabled = !looted;
         }
     }
 }
