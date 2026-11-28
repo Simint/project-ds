@@ -57,10 +57,12 @@ namespace Game.Building
                 RestoreOne(data);
         }
 
+        /// <summary>여기서는 레지스트리를 갱신하지 않는다. 씬을 내리는 도중이라 자식 구조물이 먼저 파괴돼
+        /// 있을 수 있어서다(그러면 그 구조물이 기록에서 빠진다). 떠나기 직전 기록은 MapLoader.Travel이,
+        /// 종료 직전 기록은 자동 저장이 SyncNow로 한다.</summary>
         private void OnDisable()
         {
             if (GameServices.BuildGrid == (object)this) GameServices.RegisterBuildGrid(null);
-            SyncRegistry();
         }
 
         /// <summary>저장 직전에 바깥(MapLoader)이 라이브 상태를 강제로 레지스트리에 반영시키려 부른다.</summary>

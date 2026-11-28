@@ -138,15 +138,20 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
 [문 상호작용] or [은신처 맵 선택]
   1. MapLoader.Travel(targetMapId, spawnPointId, travelMinutes)
   2. 화면 페이드 아웃, 플레이어 입력 잠금
-  3. 현재 맵의 모든 IPersistentObject → MapStateRegistry에 상태 기록 (Capture)
-  4. 현재 맵 씬 언로드
+  3. 현재 맵의 모든 IPersistentObject → MapStateRegistry에 상태 기록 (Capture),
+     은신처면 BuildGrid.SyncNow로 건설물 기록, 떠나는 맵과 플레이어 위치 기억
+  4. 현재 맵 씬 언로드 (BuildGrid.OnDisable은 기록하지 않는다 — 언로드 중엔 구조물이 먼저 파괴될 수 있다)
   5. travelMinutes > 0이면 WorldClock.Advance(minutes) → 스탯·부패·작물이 그만큼 진행
   6. 새 맵 씬 가산 로드
   7. 새 맵의 IPersistentObject → 저장된 상태 적용 (Restore), 리스폰 계산
   8. 사망 주머니가 이 맵에 있으면 생성
   9. 플레이어를 SpawnPoint로 이동 (rb.position), 카메라 경계 교체
  10. 자동 저장, 페이드 인, 입력 해제
+ 11. 이동이 완전히 끝난 뒤(이동 중 표시가 풀린 뒤) MapChanged 발행 — 구독자가 그 안에서 다시 Travel을 부를 수 있다
 ```
+
+- 새 맵 씬을 못 불러오거나 MapRoot가 없으면 그 씬을 내리고, 떠난 맵의 마지막 위치로 한 번만 되돌아간다. 이미 흐른 이동 시간은 되돌리지 않는다. 실패한 이동은 저장하지 않고 MapChanged도 보내지 않는다.
+- 저장(`SaveService.Save`)이 디스크 오류로 실패하면 오류 로그만 남기고 false를 돌려준다. 이동 흐름은 끊기지 않는다.
 
 - `MapTransitionDoor`(`IInteractable`): `targetMap`(MapDefinition), `targetSpawnPointId`. 인접 지역, 실내, 층 이동이 모두 이 컴포넌트를 쓴다. 이동 시간은 현재 맵과 목표 맵 중 어느 쪽이 Hub인지로 정해진다: Hub↔Region이면 Region 쪽 `travelMinutesFromHub`를 양방향에 그대로 쓰고, 그 외(같은 지역 내부, 실내, 층 이동)는 `0`이다.
 - `SpawnPoint`: 맵 안에서 고유한 `spawnPointId` 문자열 (`from_hub`, `door_house01`, `stairs_up`).
@@ -301,6 +306,9 @@ Boot.unity (항상 로드)                    맵 씬 (한 번에 하나, 가산
   1. 난이도의 `DropRule`대로 아이템을 꺼내 `DeathBagRecord { mapId, position, items }`를 만든다. 이전 기록은 덮어쓴다 (마지막 하나만).
   2. 은신처의 부활 지점으로 이동하고 스탯을 리셋한다.
   3. 그 맵에 들어가면 `MapLoader`가 사망 주머니를 생성한다. 주머니를 열면 기록이 지워진다.
+  - 죽은 자리는 `MapLoader.TryGetPlayerLocation`으로 정한다. 맵 이동 도중(떠난 맵을 내린 뒤)에 죽으면 떠난 맵의 마지막 위치다.
+  - 진행 중인 이동이 있으면 끝날 때까지 기다렸다가 은신처로 보낸다. 기다리는 동안 입력을 잠그고, 은신처로 가는 중에 또 죽으면 주머니를 다시 만들지 않는다(부활만).
+  - 시간 건너뛰기(잠·먼 이동) 도중 죽으면 생존 스탯은 남은 시간을 계산하지 않는다. 시계와 다른 `Advanced` 구독자는 전체 시간을 쓴다.
 
 ### 4.9 쪽지 (`Lore/`)
 

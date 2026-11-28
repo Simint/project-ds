@@ -14,6 +14,7 @@ public sealed class PlayerSurvivalDeathTests
     private PlayerSurvival survival;
     private SurvivalStatDatabase database;
     private SurvivalStatDefinition hp;
+    private SurvivalSettings settings;
 
     [SetUp]
     public void SetUp()
@@ -45,6 +46,7 @@ public sealed class PlayerSurvivalDeathTests
         Object.DestroyImmediate(go);
         Object.DestroyImmediate(database);
         Object.DestroyImmediate(hp);
+        if (settings != null) Object.DestroyImmediate(settings);
     }
 
     private static void SetField(Object target, string field, float value)
@@ -100,5 +102,27 @@ public sealed class PlayerSurvivalDeathTests
         survival.CheckDeath();
 
         Assert.AreEqual(2, diedCount);
+    }
+
+    [Test]
+    public void AdvancingManyHours_StopsAfterFirstDeath_SoRevivedBodyIsNotKilledAgain()
+    {
+        // 시간당 HP가 줄어드는 상태에서 몇 시간을 한 번에 건너뛰면, 도중에 한 번 죽고(PlayerDeath처럼 바로 부활)
+        // 남은 시간은 계산하지 않아야 한다 — 그렇지 않으면 부활한 몸이 또 죽어 사망 주머니가 덮어써진다.
+        SetField(hp, "changePerGameHour", -30f);
+        settings = ScriptableObject.CreateInstance<SurvivalSettings>();
+        var so = new SerializedObject(survival);
+        so.FindProperty("settings").objectReferenceValue = settings;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        int diedCount = 0;
+        survival.Died += () => { diedCount++; survival.Revive(); };
+
+        System.Reflection.MethodInfo handleAdvanced = typeof(PlayerSurvival)
+            .GetMethod("HandleAdvanced", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.IsNotNull(handleAdvanced, "PlayerSurvival.HandleAdvanced 이름이 바뀌었으면 이 테스트도 고친다.");
+        handleAdvanced.Invoke(survival, new object[] { 10L * 60 });
+
+        Assert.AreEqual(1, diedCount);
+        Assert.Greater(survival.Stats.Get(StatIds.Hp).Value, 0f);
     }
 }

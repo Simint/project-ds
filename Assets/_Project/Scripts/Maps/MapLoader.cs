@@ -47,7 +47,27 @@ namespace Game.Maps
         private MapDefinition startOverrideMap;
         private Vector2? startOverridePosition;
 
+        // 이동하면서 내린(떠난) 맵과 그 직전 플레이어 위치. 이동 도중 사망(사망 주머니 위치)과
+        // 새 맵 로드 실패 시 되돌아가기에 쓴다.
+        private MapDefinition departedMap;
+        private Vector2 departedPosition;
+
         public MapDefinition CurrentMap => currentRoot != null ? currentRoot.Definition : null;
+
+        /// <summary>플레이어가 지금 "있는" 맵과 위치. 평소에는 현재 맵과 실제 위치이고, 이동 도중(떠난 맵을
+        /// 내린 뒤 새 맵이 준비되기 전)에는 떠난 맵의 마지막 위치다. 둘 다 없으면(게임 시작 전) false.</summary>
+        public bool TryGetPlayerLocation(out MapDefinition map, out Vector2 position)
+        {
+            if (CurrentMap != null)
+            {
+                map = CurrentMap;
+                position = playerBody != null ? playerBody.position : Vector2.zero;
+                return true;
+            }
+            map = departedMap;
+            position = departedPosition;
+            return map != null;
+        }
 
         /// <summary>맵 전환(페이드·씬 로드) 도중인지. 이 동안은 아이템 사용 등 일부 입력을 건너뛴다.</summary>
         public bool IsTraveling => travelInProgress;
@@ -132,6 +152,15 @@ namespace Game.Maps
                 if (currentScene.IsValid())
                 {
                     CaptureCurrentMapState();
+                    // 은신처 건설물은 씬을 내리기 전, 모든 구조물이 살아 있을 때 기록한다. 내리는 도중
+                    // (BuildGrid.OnDisable)에는 자식 구조물이 먼저 파괴돼 기록에서 빠질 수 있다.
+                    GameServices.BuildGrid?.SyncNow();
+                    // 제대로 들어가 있던 맵만 기억한다(직전 이동이 실패해 맵이 없는 상태면 그 전 기억을 지킨다).
+                    if (CurrentMap != null)
+                    {
+                        departedMap = CurrentMap;
+                        departedPosition = playerBody != null ? playerBody.position : Vector2.zero;
+                    }
                     AsyncOperation unload = SceneManager.UnloadSceneAsync(currentScene);
                     if (unload != null) await Awaitable.FromAsyncOperation(unload, token);
                     currentRoot = null;
@@ -139,23 +168,27 @@ namespace Game.Maps
 
                 if (travelMinutes > 0) worldClock?.Advance(travelMinutes);
 
-                await LoadMapScene(targetMap.SceneName, token);
-                currentRoot = FindMapRoot(currentScene);
-                if (currentRoot == null)
+                // 이동이 실패해 되돌아가더라도 이미 흐른 이동 시간(Advance)은 되돌리지 않는다 — 길을 나섰다가
+                // 돌아온 것으로 본다.
+                currentRoot = await LoadMapWithRoot(targetMap, token);
+                if (currentRoot == null && departedMap != null && departedMap != targetMap)
                 {
-                    GameLog.Warning("MapLoader", $"'{targetMap.SceneName}' 씬에 MapRoot가 없습니다.", this);
+                    // 플레이어가 빈 곳에 남지 않도록 떠난 맵의 마지막 위치로 한 번만 되돌아간다.
+                    Debug.LogError($"[MapLoader] '{targetMap.SceneName}'으로 이동하지 못해 '{departedMap.SceneName}'으로 되돌아갑니다.", this);
+                    currentRoot = await LoadMapWithRoot(departedMap, token);
+                    if (currentRoot != null) exactPosition = departedPosition;
                 }
-                else
+
+                if (currentRoot != null)
                 {
                     RestoreNewMapState();
                     if (exactPosition.HasValue) PlacePlayerAt(exactPosition.Value);
                     else PlacePlayer(spawnPointId);
                     ConfigureCameraBounds();
+                    SpawnDeathBagIfPresent();
+                    AutoSave();
+                    arrived = true;
                 }
-
-                SpawnDeathBagIfPresent();
-                AutoSave();
-                arrived = true;
             }
             catch (OperationCanceledException)
             {
@@ -163,7 +196,7 @@ namespace Game.Maps
             }
             catch (Exception e)
             {
-                GameLog.Warning("MapLoader", $"'{targetMap.SceneName}'으로 이동 중 오류가 나 중단합니다: {e}", this);
+                Debug.LogError($"[MapLoader] '{targetMap.SceneName}'으로 이동 중 오류가 나 중단합니다: {e}", this);
             }
             finally
             {
@@ -293,17 +326,39 @@ namespace Game.Maps
             saveService.Save(data);
         }
 
-        private async Awaitable LoadMapScene(string sceneName, CancellationToken token)
+        /// <summary>맵 씬을 불러오고 MapRoot를 찾는다. 씬을 못 불러오거나 MapRoot가 없으면 null — MapRoot 없는
+        /// 씬은 쓸 수 없으므로 바로 내려서, 되돌아가기로 다른 맵을 불러와도 맵 씬이 둘 겹쳐 뜨지 않게 한다.</summary>
+        private async Awaitable<MapRoot> LoadMapWithRoot(MapDefinition map, CancellationToken token)
         {
+            if (!await LoadMapScene(map.SceneName, token)) return null;
+            MapRoot root = FindMapRoot(currentScene);
+            if (root != null) return root;
+
+            Debug.LogError($"[MapLoader] '{map.SceneName}' 씬에 MapRoot가 없어 내립니다.", this);
+            AsyncOperation unload = SceneManager.UnloadSceneAsync(currentScene);
+            if (unload != null) await Awaitable.FromAsyncOperation(unload, token);
+            currentScene = default;
+            return null;
+        }
+
+        /// <summary>씬을 덧붙여 불러오고 활성 씬으로 만든다. 불러오지 못하면 false (currentScene은 비운다).</summary>
+        private async Awaitable<bool> LoadMapScene(string sceneName, CancellationToken token)
+        {
+            currentScene = default;
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
             if (op == null)
             {
-                GameLog.Warning("MapLoader", $"씬 '{sceneName}'을 로드할 수 없습니다. Build Profiles에 등록되었는지 확인하세요.", this);
-                return;
+                Debug.LogError($"[MapLoader] 씬 '{sceneName}'을 로드할 수 없습니다. Build Profiles에 등록되었는지 확인하세요.", this);
+                return false;
             }
             await Awaitable.FromAsyncOperation(op, token);
             currentScene = SceneManager.GetSceneByName(sceneName);
-            if (currentScene.IsValid()) SceneManager.SetActiveScene(currentScene);
+            // SceneName이 경로 형식이라 이름으로 못 찾으면, 방금 덧붙인(목록 맨 끝) 씬을 쓴다 — 그래야 실제로
+            // 올라온 씬을 잃어버려 내리지 못하는 일이 없다.
+            if (!currentScene.IsValid()) currentScene = SceneManager.GetSceneAt(SceneManager.sceneCount - 1);
+            if (!currentScene.IsValid()) return false;
+            SceneManager.SetActiveScene(currentScene);
+            return true;
         }
 
         private static MapRoot FindMapRoot(Scene scene)

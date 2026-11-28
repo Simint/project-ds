@@ -1,6 +1,8 @@
+using System;
 using Game.Core;
 using Game.Inventory;
 using Game.Maps;
+using Game.Player;
 using Game.Save;
 using Game.Items;
 using Game.World;
@@ -11,8 +13,8 @@ namespace Game.Survival
 {
     /// <summary>
     /// PlayerSurvival.Died를 구독해 은신처에서 부활시킨다 (docs/design/GAME_DESIGN.md 5.8, ARCHITECTURE.md
-    /// 4.8). 죽은 자리에 소지품을 통째로 사망 주머니로 남긴다 — 난이도가 들어가는 8단계 전까지는 "보통"
-    /// 기준(가방 안 물건 전부)으로 떨어뜨린다(장비 슬롯은 아직 없어 해당 사항 없음, 6.5).
+    /// 4.8). 죽은 자리에 난이도가 정한 범위의 소지품을 사망 주머니로 남긴다. 맵 이동 도중에 죽으면 떠난 맵의
+    /// 마지막 위치를 죽은 자리로 본다.
     /// </summary>
     public sealed class PlayerDeath : MonoBehaviour
     {
@@ -20,6 +22,10 @@ namespace Game.Survival
         [SerializeField] private PlayerInventory playerInventory;
         [SerializeField] private MapDefinition hubMap;
         [SerializeField] private string hubSpawnPointId = "";
+
+        // 은신처로 돌려보내는 중인지. 그동안 또 죽으면(예: 이동 중 다시 HP 0) 주머니를 다시 만들지 않는다 —
+        // 이미 비운 가방으로 새 주머니를 만들면 첫 주머니를 덮어써 소지품이 사라진다.
+        private bool isReturningToHub;
 
         private void Awake()
         {
@@ -36,46 +42,63 @@ namespace Game.Survival
         private void OnDisable()
         {
             if (survival != null) survival.Died -= HandleDied;
-            if (GameServices.MapLoader != null) GameServices.MapLoader.MapChanged -= HandleMapChangedAfterDeath;
         }
 
         private void HandleDied()
         {
+            if (isReturningToHub)
+            {
+                survival.Revive();
+                return;
+            }
             DropDeathBag();
             survival.Revive();
-            MapLoader loader = GameServices.MapLoader;
-            if (loader == null || hubMap == null) return;
-
-            // 맵 이동 도중(페이드·씬 로드 중)에 죽으면 Travel이 "이미 이동 중"이라며 조용히 무시한다 —
-            // 지금 진행 중인 이동이 끝날 때까지 기다렸다가 은신처로 되돌린다.
-            if (loader.IsTraveling)
-                loader.MapChanged += HandleMapChangedAfterDeath;
-            else
-                _ = loader.Travel(hubMap, hubSpawnPointId, 0);
+            if (GameServices.MapLoader == null || hubMap == null) return;
+            _ = ReturnToHub();
         }
 
-        private void HandleMapChangedAfterDeath(MapDefinition arrivedAt)
+        /// <summary>진행 중인 맵 이동이 있으면 끝나길 기다렸다가 은신처로 보낸다(이동 중에 부르면 Travel이 "이미
+        /// 이동 중"으로 무시한다). 이동이 실패·취소돼도 표시는 반드시 풀어, 이후 사망이 무시되지 않게 한다.</summary>
+        private async Awaitable ReturnToHub()
         {
-            MapLoader loader = GameServices.MapLoader;
-            if (loader == null) return;
-            loader.MapChanged -= HandleMapChangedAfterDeath;
-            if (hubMap != null) _ = loader.Travel(hubMap, hubSpawnPointId, 0);
+            isReturningToHub = true;
+            // 진행 중이던 이동이 끝나고 은신처 이동이 시작되기 전 틈(한 프레임)에 부활한 플레이어가 움직이거나
+            // 아이템을 쓰지 않도록, 기다리는 동안 직접 입력을 잠근다.
+            PlayerInputReader input = GameServices.PlayerInputReader;
+            input?.SetLocked(this, true);
+            try
+            {
+                MapLoader loader = GameServices.MapLoader;
+                while (loader != null && loader.IsTraveling)
+                    await Awaitable.NextFrameAsync(destroyCancellationToken);
+                if (loader != null) await loader.Travel(hubMap, hubSpawnPointId, 0);
+            }
+            catch (OperationCanceledException)
+            {
+                // 오브젝트가 파괴되는 중(게임 종료 등)이라 따로 알리지 않는다.
+            }
+            finally
+            {
+                if (input != null) input.SetLocked(this, false);
+                isReturningToHub = false;
+            }
         }
 
-        /// <summary>죽은 자리(현재 맵·위치)와 난이도가 정한 범위의 물건을 사망 주머니로 남기고 가방에서 뺀다
-        /// (5.8: 쉬움은 재료류만, 보통·어려움은 가방 전부). 새로 죽으면 이전 주머니는 덮어써 사라진다
-        /// (DeathBagRegistry.Set, 5.8 "마지막 하나만").</summary>
+        /// <summary>죽은 자리(현재 맵·위치, 이동 중이면 떠난 맵의 마지막 위치)에 난이도가 정한 범위의 물건을
+        /// 사망 주머니로 남기고 가방에서 뺀다 (5.8: 쉬움은 재료류만, 보통·어려움은 가방 전부). 새로 죽으면 이전
+        /// 주머니는 덮어써 사라진다 (DeathBagRegistry.Set, 5.8 "마지막 하나만").</summary>
         private void DropDeathBag()
         {
             MapLoader loader = GameServices.MapLoader;
             DeathBagRegistry registry = GameServices.DeathBagRegistry;
-            if (loader == null || loader.CurrentMap == null || registry == null || playerInventory == null) return;
+            if (loader == null || registry == null || playerInventory == null) return;
+            if (!loader.TryGetPlayerLocation(out MapDefinition map, out Vector2 position)) return;
 
             var record = new DeathBagRecord
             {
-                mapId = loader.CurrentMap.Id,
-                x = transform.position.x,
-                y = transform.position.y
+                mapId = map.Id,
+                x = position.x,
+                y = position.y
             };
             DeathDropScope scope = DifficultyRules.DropScope(GameServices.Difficulty);
             var dropped = new List<int>();

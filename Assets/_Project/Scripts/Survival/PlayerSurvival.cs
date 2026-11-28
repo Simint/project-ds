@@ -35,6 +35,10 @@ namespace Game.Survival
         private SurvivalStats stats;
         private bool diedSignaled;
 
+        // Died를 발행한 횟수. 시간 건너뛰기(HandleAdvanced) 도중 사망했는지 알아내는 데만 쓴다 — diedSignaled는
+        // Died 구독자(PlayerDeath)가 바로 Revive해서 다시 false가 되므로 그 용도로 쓸 수 없다.
+        private int deathCount;
+
         // 침대처럼 "HP 자연 회복만 더 빠르게" 하는 출처를 위한 자리. 허기·갈증처럼 Tick 기반 비율이
         // 아니라 ApplyHealthRule의 회복 분기에서만 곱해지므로 SurvivalStats.SetModifier와는 따로 둔다.
         private readonly Dictionary<string, float> hpRegenMultipliers = new Dictionary<string, float>();
@@ -173,13 +177,16 @@ namespace Game.Survival
         /// <summary>잠자기·먼 지역 이동처럼 한 번에 몇 시간씩 건너뛸 때, 그 시간을 통째로 한 번에
         /// 계산하지 않고 1시간 단위로 잘라서 돈다 — 그래야 허기·갈증이 중간에 0을 지나는 시점부터
         /// 정확히 "굶는 상태"로 HP가 깎인다(통째로 계산하면 마지막 상태만 보고 전체 시간에 그 규칙을
-        /// 적용해 버린다).</summary>
+        /// 적용해 버린다).
+        /// 건너뛰는 도중 죽으면 남은 시간은 계산하지 않는다 — 죽으면 그 자리에서 바로 부활하므로(PlayerDeath),
+        /// 남은 시간이 부활한 몸에 이어 적용되면 또 죽어 사망 주머니가 덮어써질 수 있다.</summary>
         private void HandleAdvanced(long minutes)
         {
             long wholeHours = minutes / 60;
             long remainderMinutes = minutes % 60;
-            for (long i = 0; i < wholeHours; i++) TickGameTime(1f);
-            if (remainderMinutes > 0) TickGameTime(remainderMinutes / 60f);
+            int deathsBefore = deathCount;
+            for (long i = 0; i < wholeHours && deathCount == deathsBefore; i++) TickGameTime(1f);
+            if (remainderMinutes > 0 && deathCount == deathsBefore) TickGameTime(remainderMinutes / 60f);
             RefreshTemperatureModifier();
         }
 
@@ -238,6 +245,7 @@ namespace Game.Survival
                 if (!diedSignaled)
                 {
                     diedSignaled = true;
+                    deathCount++;
                     Died?.Invoke();
                 }
             }

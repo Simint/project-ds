@@ -22,17 +22,41 @@ namespace Game.Save
         }
 
         /// <summary>임시 파일에 먼저 쓰고 나서 실제 파일로 바꿔 끼운다 — 쓰다가 중간에 멈추면(강종,
-        /// 디스크 꽉 참 등) 기존 저장 파일은 그대로 남는다. 절반만 쓰인 파일이 생기지 않는다.</summary>
-        public void Save(WorldSaveData data)
+        /// 디스크 꽉 참 등) 기존 저장 파일은 그대로 남는다. 절반만 쓰인 파일이 생기지 않는다.
+        /// 디스크 오류(권한, 공간 부족, 다른 프로그램이 파일을 잡고 있음)는 예외로 던지지 않고 오류 로그를 남긴 뒤
+        /// false를 돌려준다 — 저장이 실패해도 맵 이동·종료 같은 호출한 쪽의 흐름은 끊기지 않아야 한다.</summary>
+        public bool Save(WorldSaveData data)
         {
-            Directory.CreateDirectory(saveDirectory);
             string path = Path.Combine(saveDirectory, FileName);
             string tempPath = path + ".tmp";
-            string json = JsonUtility.ToJson(data);
-            File.WriteAllText(tempPath, json);
+            try
+            {
+                Directory.CreateDirectory(saveDirectory);
+                string json = JsonUtility.ToJson(data);
+                File.WriteAllText(tempPath, json);
 
-            if (File.Exists(path)) File.Replace(tempPath, path, null);
-            else File.Move(tempPath, path);
+                if (File.Exists(path)) File.Replace(tempPath, path, null);
+                else File.Move(tempPath, path);
+                return true;
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                Debug.LogError($"[Save] 저장하지 못했습니다(기존 저장 파일은 그대로 둡니다): {e.Message}");
+                TryDeleteTemp(tempPath);
+                return false;
+            }
+        }
+
+        private static void TryDeleteTemp(string tempPath)
+        {
+            try
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                // 남은 임시 파일은 다음 저장이 덮어쓴다.
+            }
         }
 
         /// <summary>새 게임을 시작할 때 기존 저장을 지운다(자동 저장 1칸, 타이틀에서 확인을 받은 뒤).</summary>

@@ -84,7 +84,7 @@ namespace Game.UI
             if (panelRoot == null || inventory == null) return;
             Refresh();
             panelRoot.SetActive(true);
-            inputReader?.SetLocked(this, true);
+            inputReader?.SetLocked(this, true, allowItemUse: true); // 가방을 연 채로 단축칸 아이템을 쓸 수 있다 (7장)
         }
 
         private void Hide()

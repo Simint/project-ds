@@ -81,4 +81,40 @@ public sealed class PlayerInputReaderLockTests
 
         Assert.IsFalse(reader.IsLocked);
     }
+
+    [Test]
+    public void ItemUse_AllowedWhenOnlyItemUseAllowedSourceLocks()
+    {
+        reader.SetLocked(sourceA, true, allowItemUse: true);
+
+        Assert.IsTrue(reader.IsLocked);
+        Assert.IsFalse(reader.IsItemUseLocked);
+    }
+
+    [Test]
+    public void ItemUse_BlockedWhenAnotherSourceAlsoLocks()
+    {
+        reader.SetLocked(sourceA, true, allowItemUse: true);
+        reader.SetLocked(sourceB, true);
+
+        Assert.IsTrue(reader.IsItemUseLocked);
+
+        reader.SetLocked(sourceB, false);
+
+        Assert.IsFalse(reader.IsItemUseLocked);
+    }
+
+    [Test]
+    public void ItemUse_RelockingWithoutAllow_BlocksAgain()
+    {
+        reader.SetLocked(sourceA, true, allowItemUse: true);
+        reader.SetLocked(sourceA, true);
+
+        Assert.IsTrue(reader.IsItemUseLocked);
+
+        reader.SetLocked(sourceA, false);
+
+        Assert.IsFalse(reader.IsItemUseLocked);
+        Assert.IsFalse(reader.IsLocked);
+    }
 }

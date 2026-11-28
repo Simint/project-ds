@@ -51,6 +51,10 @@ namespace Game.Player
         // 잠근 쪽(this로 넘기는 호출자)마다 따로 기억하는 집합으로 바꿔 출처별로 독립시킨다.
         private readonly HashSet<object> lockSources = new HashSet<object>();
 
+        // 잠갔지만 아이템 사용(UseItem)은 막지 않는 출처 (가방 창). 이 집합에 없는 출처가 하나라도 잠그고 있으면
+        // 아이템을 쓸 수 없다(잠자기·보관함·제작·지역 선택·타이틀 화면·맵 이동).
+        private readonly HashSet<object> itemUseAllowedSources = new HashSet<object>();
+
         public Vector2 MoveInput { get; private set; }
         public bool RunHeld { get; private set; }
 
@@ -71,6 +75,9 @@ namespace Game.Player
         public Vector2 PointerWorldPosition { get; private set; }
 
         public bool IsLocked => lockSources.Count > 0;
+
+        /// <summary>단축칸 아이템 사용을 막는 잠금이 있는지. 가방 창(allowItemUse로 잠근 출처)만 열려 있으면 false.</summary>
+        public bool IsItemUseLocked => lockSources.Count > itemUseAllowedSources.Count;
 
         /// <summary>마지막으로 입력을 보낸 장치의 컨트롤 스킴 ("Keyboard&Mouse" 또는 "Gamepad"). 상호작용
         /// 안내의 키 표시를 여기에 맞춘다.</summary>
@@ -279,12 +286,22 @@ namespace Game.Player
 
         /// <summary>맵 이동(페이드)·지역 선택 창 등이 열린 동안 이동·점프·손 전환·상호작용을 멈춘다.
         /// source는 잠근 쪽 자신(보통 this)을 넘긴다 — 그래야 서로 다른 UI가 동시에 잠궈도 한쪽이
-        /// 풀 때 다른 쪽 잠금까지 같이 풀리지 않는다.</summary>
-        public void SetLocked(object source, bool value)
+        /// 풀 때 다른 쪽 잠금까지 같이 풀리지 않는다.
+        /// allowItemUse가 true면 이 출처의 잠금은 단축칸 아이템 사용을 막지 않는다(가방 창).</summary>
+        public void SetLocked(object source, bool value, bool allowItemUse = false)
         {
             if (source == null) return;
-            if (value) lockSources.Add(source);
-            else lockSources.Remove(source);
+            if (value)
+            {
+                lockSources.Add(source);
+                if (allowItemUse) itemUseAllowedSources.Add(source);
+                else itemUseAllowedSources.Remove(source);
+            }
+            else
+            {
+                lockSources.Remove(source);
+                itemUseAllowedSources.Remove(source);
+            }
 
             if (IsLocked)
             {
@@ -369,11 +386,11 @@ namespace Game.Player
             if (!IsLocked) HotbarPrevPressed?.Invoke();
         }
 
-        /// <summary>가방이 열려 있어도 아이템을 쓸 수 있어야 해서 잠금의 영향을 받지 않는다
-        /// (UISubmit/UICancel과 같은 예외, docs/design/GAME_DESIGN.md 7).</summary>
+        /// <summary>가방이 열려 있어도 아이템을 쓸 수 있어야 해서(docs/design/GAME_DESIGN.md 7) 일반 잠금 대신
+        /// IsItemUseLocked를 본다 — 가방 창의 잠금은 통과하고, 다른 창·맵 이동의 잠금은 막는다.</summary>
         private void HandleUseItemPerformed(InputAction.CallbackContext context)
         {
-            UseItemPressed?.Invoke();
+            if (!IsItemUseLocked) UseItemPressed?.Invoke();
         }
 
         /// <summary>건설 모드 자신이 잠금을 걸기 때문에 UICancel처럼 잠금과 무관하게 항상 발행한다.</summary>

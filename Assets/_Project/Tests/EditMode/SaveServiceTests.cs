@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.IO;
 using Game.Save;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 public sealed class SaveServiceTests
 {
@@ -128,5 +130,21 @@ public sealed class SaveServiceTests
         Assert.AreEqual(2, loaded.version);
         Assert.AreEqual(1, loaded.inventorySlots.Count);
         Assert.AreEqual(-1, loaded.inventorySlots[0].slotIndex);
+    }
+
+    [Test]
+    public void Save_ReturnsFalseAndKeepsOldFile_WhenDiskWriteFails()
+    {
+        var service = new SaveService(tempDir);
+        Assert.IsTrue(service.Save(new WorldSaveData { clockTotalMinutes = 1 }));
+
+        // 임시 파일 자리에 폴더를 만들어 두면 WriteAllText가 IOException/UnauthorizedAccessException을 낸다.
+        Directory.CreateDirectory(Path.Combine(tempDir, "slot0.json.tmp"));
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(@"\[Save\] 저장하지 못했습니다"));
+
+        bool saved = service.Save(new WorldSaveData { clockTotalMinutes = 2 });
+
+        Assert.IsFalse(saved);
+        Assert.AreEqual(1, service.Load().clockTotalMinutes);
     }
 }

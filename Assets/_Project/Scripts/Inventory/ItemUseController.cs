@@ -44,8 +44,8 @@ namespace Game.Inventory
 
         private void HandleUseItemPressed()
         {
-            // UseItem은 가방이 열려 있어도 쓸 수 있도록 PlayerInputReader의 잠금을 타지 않지만(가방 Tab과
-            // 같은 locked 값을 맵 이동 페이드도 쓰므로), 맵이 바뀌는 도중에는 건너뛴다.
+            // 다른 창·맵 이동 중에는 PlayerInputReader가 UseItem을 아예 보내지 않는다(IsItemUseLocked, 가방 창만 예외).
+            // 아래 맵 이동 확인은 그 잠금과 겹치는 중복 안전장치다(잠금 출처가 바뀌어도 이동 중 사용을 막는다).
             if (GameServices.MapLoader != null && GameServices.MapLoader.IsTraveling) return;
             // 마우스 오른쪽 버튼이 UseItem과 건설 모드의 BuildDemolish에 같이 묶여 있다 — 건설 모드 중엔
             // 철거만 하고, 손에 든 소비 아이템을 같이 쓰지 않는다.
