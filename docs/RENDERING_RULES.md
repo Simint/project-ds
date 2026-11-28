@@ -13,7 +13,7 @@ CinemachinePixelPerfect는 쓰지 않는다.
 |---|---|
 | 1유닛(타일 1칸) 그림 크기 | 128×128 px (캐릭터는 2유닛 = 높이 256px) |
 | Pixels Per Unit | 128 |
-| 화면에 보이는 범위(세로) | 약 11.25유닛 (Orthographic Size 5.625) — 정수배 업스케일 없이 그대로 |
+| 화면에 보이는 범위(세로) | 약 7.8유닛 (Orthographic Size 3.9) — 정수배 업스케일 없이 그대로 |
 | 텍스처 필터 | 기본 **Bilinear** (`harness.config.json`의 `filterMode`. Point로 바꿔 비교해 볼 수 있다) |
 | 렌더 파이프라인 | URP, 2D Renderer |
 | Transparency Sort Mode | **Default** (Custom Axis 금지) |
@@ -90,7 +90,7 @@ CinemachinePixelPerfect는 쓰지 않는다.
 ## 5. 카메라
 
 - `PixelPerfectCamera`·`CinemachinePixelPerfect`는 쓰지 않는다. Main Camera는 화면 해상도 그대로 렌더링한다.
-- Orthographic Size는 5.625로 둬서 화면 세로 범위가 약 11.25유닛이 되게 한다(1장 기준).
+- Orthographic Size는 3.9로 둬서 화면 세로 범위가 약 7.8유닛이 되게 한다(1장 기준). Main Camera와 Cinemachine 카메라 렌즈 값을 함께 맞춘다.
 - 따라가기는 Cinemachine + `CinemachineConfiner2D`로 맵 밖을 비추지 않게 한다.
 - 화면 스페이스 UI(`CanvasScaler`)는 Scale With Screen Size, Reference 1920×1080, Match Height(`matchWidthOrHeight = 1`)로 둔다. 카메라가 세로만 고정하고(위) 가로는 화면 비율대로 늘어나는 것과 같은 축으로 맞춰, 와이드 화면에서 모서리 HUD가 카메라 프레이밍과 어긋나지 않게 한다.
 

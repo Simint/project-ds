@@ -43,7 +43,7 @@ class Config:
 
     @property
     def screen_vertical_units(self) -> float:
-        return float(self.data.get("screenVerticalUnits", 11.25))
+        return float(self.data.get("screenVerticalUnits", 7.8))
 
     @property
     def art_root(self) -> str:

@@ -10,7 +10,7 @@ namespace Game.Editor.Harness
     {
         public string view = "SideScroller";
         public int pixelsPerUnit = 16;
-        public float screenVerticalUnits = 11.25f;
+        public float screenVerticalUnits = 7.8f;
         public string filterMode = "Bilinear";
         public string artRoot = "Assets/_Project/Art";
         public string[] bottomPivotFolders = Array.Empty<string>();

@@ -4,7 +4,7 @@
   "view": "SideScroller",
 
   "pixelsPerUnit": 128,
-  "screenVerticalUnits": 11.25,
+  "screenVerticalUnits": 7.8,
   "filterMode": "Bilinear",
 
   "artRoot": "Assets/_Project/Art",
