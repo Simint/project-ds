@@ -11,7 +11,8 @@ namespace Game.UI
     /// <summary>
     /// 잘 시간 고르기 창 (docs/design/GAME_DESIGN.md 8, MVP 5단계). 자는 동안 허기·갈증은 덜 줄고 HP는
     /// 더 빨리 회복하는 모디파이어를 걸고 WorldClock.Advance로 시간을 건너뛴다. 허기·갈증이 이미
-    /// 0이면 못 자고, 자는 중간에 0이 될 것 같으면 그 직전까지만 재운다(깬 것으로 취급).
+    /// 0이거나, 출혈 중이거나, 골절이 치료되지 않았으면 못 잔다(SleepRules). 자는 중간에 허기·갈증이
+    /// 0이 될 것 같으면 그 직전까지만 재운다(깬 것으로 취급).
     /// </summary>
     public sealed class SleepUI : MonoBehaviour
     {
@@ -24,8 +25,12 @@ namespace Game.UI
         [SerializeField] private Text warningText;
         [SerializeField] private SleepSettings settings;
         [SerializeField] private PlayerInputReader inputReader;
+        [SerializeField] private string bleedingWarning = "피가 멎지 않아 잘 수 없습니다 (붕대로 치료하세요)";
+        [SerializeField] private string fractureWarning = "뼈가 부러져 잘 수 없습니다 (부목 등으로 치료하세요)";
 
         private PlayerSurvival survival;
+        private PlayerStatusEffects statusEffects;
+        private string starvingWarning = "";
         private int openedFrame = -1;
 
         private void Awake()
@@ -37,6 +42,8 @@ namespace Game.UI
             if (settings == null) Debug.LogError("[SleepUI] settings 참조가 비어 있습니다.", this);
             if (inputReader == null) Debug.LogError("[SleepUI] inputReader 참조가 비어 있습니다.", this);
 
+            // 허기·갈증 안내는 씬에 적어 둔 문구를 그대로 쓴다. 출혈·골절일 때만 문구를 바꿔 끼운다.
+            if (warningText != null) starvingWarning = warningText.text;
             if (panelRoot != null) panelRoot.SetActive(false);
         }
 
@@ -60,16 +67,22 @@ namespace Game.UI
             longSleepButton?.onClick.RemoveListener(HandleLongSleepClicked);
         }
 
-        public void Show(PlayerSurvival targetSurvival)
+        public void Show(PlayerSurvival targetSurvival, PlayerStatusEffects targetStatusEffects)
         {
             if (panelRoot == null) return;
             survival = targetSurvival;
+            statusEffects = targetStatusEffects;
 
-            bool canSleep = CanSleepAtAll();
+            SleepBlockReason reason = EvaluateBlockReason();
+            bool canSleep = reason == SleepBlockReason.None;
             if (shortSleepButton != null) shortSleepButton.interactable = canSleep;
             if (mediumSleepButton != null) mediumSleepButton.interactable = canSleep;
             if (longSleepButton != null) longSleepButton.interactable = canSleep;
-            if (warningText != null) warningText.gameObject.SetActive(!canSleep);
+            if (warningText != null)
+            {
+                warningText.gameObject.SetActive(!canSleep);
+                if (!canSleep) warningText.text = WarningFor(reason);
+            }
 
             panelRoot.SetActive(true);
             openedFrame = Time.frameCount;
@@ -81,6 +94,7 @@ namespace Game.UI
             if (panelRoot != null) panelRoot.SetActive(false);
             inputReader?.SetLocked(this, false);
             survival = null;
+            statusEffects = null;
         }
 
         private void HandleCancelPressed()
@@ -92,14 +106,25 @@ namespace Game.UI
             Hide();
         }
 
-        private bool CanSleepAtAll()
+        private bool CanSleepAtAll() => survival != null && EvaluateBlockReason() == SleepBlockReason.None;
+
+        private SleepBlockReason EvaluateBlockReason()
         {
-            if (survival == null) return false;
+            if (survival == null) return SleepBlockReason.Starving;
             SurvivalStat hunger = survival.Stats.Get(StatIds.Hunger);
             SurvivalStat thirst = survival.Stats.Get(StatIds.Thirst);
             bool starving = (hunger != null && hunger.IsAtMin) || (thirst != null && thirst.IsAtMin);
-            return !starving;
+            bool bleeding = statusEffects != null && statusEffects.Effects.Has(StatusEffectIds.Bleeding);
+            bool fracture = statusEffects != null && statusEffects.Effects.Has(StatusEffectIds.Fracture);
+            return SleepRules.Evaluate(starving, bleeding, fracture);
         }
+
+        private string WarningFor(SleepBlockReason reason) => reason switch
+        {
+            SleepBlockReason.Bleeding => bleedingWarning,
+            SleepBlockReason.Fracture => fractureWarning,
+            _ => starvingWarning
+        };
 
         private void HandleShortSleepClicked() => Sleep(settings.ShortSleepHours);
         private void HandleMediumSleepClicked() => Sleep(settings.MediumSleepHours);

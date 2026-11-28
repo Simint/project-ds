@@ -119,6 +119,7 @@ namespace Game.Maps
             travelInProgress = true;
             CancellationToken token = destroyCancellationToken;
             bool fadedOut = false;
+            bool arrived = false;
             try
             {
                 playerInput?.SetLocked(this, true);
@@ -154,8 +155,7 @@ namespace Game.Maps
 
                 SpawnDeathBagIfPresent();
                 AutoSave();
-
-                MapChanged?.Invoke(CurrentMap);
+                arrived = true;
             }
             catch (OperationCanceledException)
             {
@@ -182,6 +182,11 @@ namespace Game.Maps
                 playerInput?.SetLocked(this, false);
                 travelInProgress = false;
             }
+
+            // 이동이 완전히 끝난 뒤(travelInProgress가 풀린 뒤)에 알린다. 이동 중에 발행하면 구독자가 그 안에서
+            // 다시 Travel을 부를 때(예: 이동 중 사망 → PlayerDeath가 은신처로 보냄) "이미 이동 중"으로 무시된다.
+            // 실패·취소된 이동은 도착한 것이 아니므로 알리지 않는다.
+            if (arrived) MapChanged?.Invoke(CurrentMap);
         }
 
         private void CaptureCurrentMapState()

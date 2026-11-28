@@ -25,7 +25,10 @@ namespace Game.Building
                 GameLog.Warning("Bed", "GameServices.SleepUI 또는 PlayerSurvival을 찾지 못했습니다.", this);
                 return;
             }
-            ui.Show(survival);
+            PlayerStatusEffects statusEffects = interactor.GetComponentInParent<PlayerStatusEffects>();
+            if (statusEffects == null)
+                GameLog.Warning("Bed", "PlayerStatusEffects를 찾지 못해 출혈·골절 확인 없이 잠 창을 엽니다.", this);
+            ui.Show(survival, statusEffects);
         }
     }
 }
